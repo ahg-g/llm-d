@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide demonstrates how to deploy DeepSeek-R1-0528 using vLLM's P/D disaggregation support with NIXL in a wide expert parallel pattern with LeaderWorkerSets. This guide has been validated on a cluster with 24xH200 GPUs split across two nodes with InfiniBand networking.
+This guide demonstrates how to deploy DeepSeek-R1-0528 using vLLM's P/D disaggregation support with NIXL in a wide expert parallel pattern with LeaderWorkerSets. This guide has been validated on a cluster with 24xH200 GPUs split across three nodes with InfiniBand networking.
 
 > WARNING: We are still investigating and optimizing performance for other hardware and networking configurations
 
