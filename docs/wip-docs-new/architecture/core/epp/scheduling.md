@@ -53,32 +53,37 @@ A `SchedulerProfile` is a configured pipeline consisting of:
 *   **Scorers**: A list of `WeightedScorer` objects, where each contains a `Scorer` plugin and its relative weight.
 *   **Picker**: A single `Picker` plugin that makes the final selection.
 
-When a profile runs, it first filters the candidate endpoints. If any remain, it calculates a weighted aggregate score for each and then passes the scored list to the picker.
+When a profile runs, it first filters the candidate endpoints. If any remain, it calculates a weighted aggregate score for each and then passes the scored list to the picker. The final score for an endpoint is calculated by multiplying the score returned by each scorer (which is bounded between 0.0 and 1.0) by its configured weight, and summing these weighted scores together. For example, if Scorer A (weight 2.0) returns 0.8 and Scorer B (weight 1.0) returns 0.5, the endpoint's final score is `(0.8 * 2.0) + (0.5 * 1.0) = 2.1`.
 
 ---
 
 ### Concrete Plugins
 
+*Note: Not all of the plugins listed below are configured by default. Only a curated subset is enabled out-of-the-box. For the current default scheduling configuration, see [Default Configuration Placeholder Link](placeholder).*
 #### Filters
-*   **`prefix-cache-affinity-filter`**: A probabilistic filter that narrows candidates to "sticky" endpoints (those with high prefix cache scores). It includes a "TTFT load gate" to break stickiness if sticky endpoints are significantly slower than non-sticky ones.
-*   **`slo-headroom-tier-filter`**: Filters endpoints based on SLO headroom tiers to ensure quality of service.
+*   **[`prefix-cache-affinity-filter`](placeholder-link)**: A probabilistic filter that narrows candidates to "sticky" endpoints (those with high prefix cache scores). It includes a "TTFT load gate" to break stickiness if sticky endpoints are significantly slower than non-sticky ones.
+*   **[`slo-headroom-tier-filter`](placeholder-link)**: Filters endpoints based on SLO headroom tiers to ensure quality of service.
 
 #### Scorers
-*   **`kv-cache-utilization-scorer`**: Prefers endpoints with lower KV cache utilization to avoid fragmentation.
-*   **`latency-scorer`**: Scores endpoints based on predicted latency.
-*   **`lora-affinity-scorer`**: Prefers endpoints that already have the requested LoRA adapter active or have capacity to load it.
-*   **`prefix-scorer`**: Scores based on the length of the prefix cache match.
-*   **`queue-depth-scorer`**: Prefers endpoints with shorter request queues.
-*   **`running-requests-scorer`**: Scores based on the number of currently active requests.
-*   **`token-load-scorer`**: Scores based on the total token load (input + output) handled by the endpoint.
+
+*For details on exactly how each scorer calculates its score (0.0 to 1.0), please refer to the specific plugin's documentation.*
+
+*   **[`kv-cache-utilization-scorer`](placeholder-link)**: Prefers endpoints with lower KV cache utilization to avoid fragmentation.
+*   **[`latency-scorer`](placeholder-link)**: Scores endpoints based on predicted latency.
+*   **[`lora-affinity-scorer`](placeholder-link)**: Prefers endpoints that already have the requested LoRA adapter active or have capacity to load it.
+*   **[`predicted-latency-scorer`](placeholder-link)**: Uses a model to predict the Time to First Token (TTFT) and scores accordingly.
+*   **[`prefix-scorer`](placeholder-link)**: Scores based on the length of the prefix cache match.
+*   **[`queue-depth-scorer`](placeholder-link)**: Prefers endpoints with shorter request queues.
+*   **[`running-requests-scorer`](placeholder-link)**: Scores based on the number of currently active requests.
+*   **[`token-load-scorer`](placeholder-link)**: Scores based on the total token load (input + output) handled by the endpoint.
 
 #### Pickers
-*   **`max-score-picker`**: Selects the endpoint with the absolute highest score.
-*   **`random-picker`**: Selects an endpoint randomly from the candidates.
-*   **`weighted-random-picker`**: Selects an endpoint randomly, using the scores as relative probabilities (lottery scheduling).
+*   **[`max-score-picker`](placeholder-link)**: Selects the endpoint with the absolute highest score.
+*   **[`random-picker`](placeholder-link)**: Selects an endpoint randomly from the candidates.
+*   **[`weighted-random-picker`](placeholder-link)**: Selects an endpoint randomly, using the scores as relative probabilities (lottery scheduling).
 
 #### Profile Handlers
-*   **`single-profile-handler`**: A standard implementation that runs a single configured primary profile.
+*   **[`single-profile-handler`](placeholder-link)**: A standard implementation that runs a single configured primary profile.
 
 ---
 
