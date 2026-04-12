@@ -7,8 +7,8 @@ The EPP Scheduler is a highly modular and extensible component within the Endpoi
 The scheduler follows a **Filter -> Score -> Pick** lifecycle for every request. It orchestrates multiple **SchedulerProfiles**, each defining a specific set of plugins for filtering and scoring candidate endpoints.
 
 ```mermaid
-flowchart TD
-    Req[LLM Request] --> S[Scheduler.Schedule]
+flowchart LR
+    Req[Inference Request] --> S[Scheduler.Schedule]
     
     subgraph Scheduling Cycle
         S --> Pick[ProfileHandler.Pick]
