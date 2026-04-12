@@ -1,10 +1,10 @@
 # EPP Scheduler
 
-The EPP Scheduler is a highly modular and extensible component within the Endpoint Picker (EPP) designed to select the optimal model server (endpoint) for an Inference request. It leverages a plugin-based architecture, allowing for sophisticated scheduling strategies based on real-time metrics, prefix caching, and model-specific requirements like LoRA adapters.
+The EPP Scheduler is a highly modular and extensible component within the Endpoint Picker (EPP) designed to select the optimal model server (endpoint) for an inference request. It leverages a plugin-based architecture, allowing for sophisticated scheduling strategies based on real-time metrics, prefix cache tracking, and model-specific requirements like LoRA adapters.
 
 ## Architecture Overview
 
-The scheduler follows a **Filter -> Score -> Pick** lifecycle for every request. It orchestrates multiple **SchedulerProfiles**, each defining a specific set of plugins for filtering and scoring candidate endpoints.
+At its core, the scheduler follows a **Filter -> Score -> Pick** lifecycle for every request. It orchestrates multiple **SchedulerProfiles**, each defining a specific set of plugins for filtering and scoring candidate endpoints.
 
 ```mermaid
 flowchart TD
@@ -20,7 +20,7 @@ flowchart TD
             Loop --> Filters[Filters]
             Filters --> Scorers[Scorers]
             Scorers --> Picker[Picker]
-            Picker --> Result[ProfileRunResult]
+            Picker --> Result[ProfileResult]
         end
         
         Result -->|Collect| Pick
@@ -30,22 +30,22 @@ flowchart TD
     PRs --> Target["Selected Endpoint(s)"]
 
     %% Styling
-    style Req fill:#e1f5fe,stroke:#01579b
-    style S fill:#e8f5e9,stroke:#2e7d32
-    style Pick fill:#fffde7,stroke:#fbc02d
-    style Loop fill:#fff,stroke:#333
-    style Filters fill:#fff3e0,stroke:#ff9800
-    style Scorers fill:#fff3e0,stroke:#ff9800
-    style Picker fill:#fff3e0,stroke:#ff9800
-    style Result fill:#f1f8e9,stroke:#558b2f
-    style PRs fill:#fce4ec,stroke:#c2185b
-    style Target fill:#f3e5f5,stroke:#7b1fa2
+    style Req fill:#e1f5fe,stroke:#01579b,color:#000
+    style S fill:#e8f5e9,stroke:#2e7d32,color:#000
+    style Pick fill:#fffde7,stroke:#fbc02d,color:#000
+    style Loop fill:#fff,stroke:#333,color:#000
+    style Filters fill:#fff3e0,stroke:#ff9800,color:#000
+    style Scorers fill:#fff3e0,stroke:#ff9800,color:#000
+    style Picker fill:#fff3e0,stroke:#ff9800,color:#000
+    style Result fill:#f1f8e9,stroke:#558b2f,color:#000
+    style PRs fill:#fce4ec,stroke:#c2185b,color:#000
+    style Target fill:#f3e5f5,stroke:#7b1fa2,color:#000
 ```
 
 ### Core Components
 
-*   **Scheduler**: The main orchestrator that manages the scheduling cycle. It invokes `ProfileHandler` to pick profiles and then runs the selected profiles to obtain target endpoints.
-*   **InferenceRequest**: A structured internal representation of the incoming request, including the target model, parsed body (Completions, ChatCompletions, etc.), headers, and objectives.
+*   **Scheduler**: The main orchestrator that manages the scheduling cycle. It invokes the configured `ProfileHandler` to pick profiles and then runs the selected profiles to obtain target endpoints.
+*   **InferenceRequest**: A structured internal representation of the incoming request produced by the [`Parser`](request-handling.md), including the target model, parsed body (Completions, ChatCompletions, etc.), headers, and objectives.
 *   **Endpoint**: Represents a candidate serving engine, with its metadata (e.g., Pod name, namespace and port) and state (e.g., active models, queue depth and KV-cache). Note that a Pod may run one or more endpoints each on a differen port, this is case in [the data parallel deployment mode](https://docs.vllm.ai/en/latest/serving/data_parallel_deployment/).
 
 ### Extension Points
@@ -71,10 +71,15 @@ When a profile runs, it first filters the candidate endpoints. If any remain, it
 
 ## Concrete Plugins
 
-*Note: Not all of the plugins listed below are configured by default. Only a curated subset is enabled out-of-the-box. For the current default scheduling configuration, see [Default Configuration Placeholder Link](placeholder).*
+> [!IMPORTANT]
+> Not all of the plugins listed below are configured by default. Only a curated subset is enabled in the [default configuration](placeholder-link).
+
 ### Filters
 *   **[`prefix-cache-affinity-filter`](placeholder-link)**: A probabilistic filter that narrows candidates to "sticky" endpoints (those with high prefix cache scores). It includes a "TTFT load gate" to break stickiness if sticky endpoints are significantly slower than non-sticky ones.
 *   **[`slo-headroom-tier-filter`](placeholder-link)**: Filters endpoints based on SLO headroom tiers to ensure quality of service.
+*   **[`label-selector-filter`](placeholder-link)**: Keeps endpoints that matches a configured label selector.
+*   **[`prefill-endpoints-filter`](placeholder-link)**: A special instance of `label-selector-filter` that retains only endpoints with a prefill label.
+*   **[`decode-endpoints-filter`](placeholder-link)**: A special instance of `label-selector-filter` that retains only endpoints with a decode label.
 
 ### Scorers
 
@@ -87,6 +92,10 @@ When a profile runs, it first filters the candidate endpoints. If any remain, it
 *   **[`queue-depth-scorer`](placeholder-link)**: Prefers endpoints with shorter request queues.
 *   **[`running-requests-scorer`](placeholder-link)**: Scores based on the number of currently active requests.
 *   **[`token-load-scorer`](placeholder-link)**: Scores based on the total token load (input + output) handled by the endpoint.
+*   **[`precise-prefix-cache-scorer`](placeholder-link)**: Scores requests based on real-time KV-cache locality. While the `prefix-scorer` relies on historical scheduling estimates, this version tracks actual cache states via model server events to ensure higher precision.
+*   **[`session-affinity-scorer`](placeholder-link)**: Assigns a maximum score to the specific endpoint that handled previous requests for the same session, while all other endpoints receive the minimum score.
+*   **[`no-hit-lru-scorer`](placeholder-link)**: For cold requests (zero cache hits), the scorer prioritizes endpoints that have never handled one, followed by those used least recently. This ensures an even distribution of the intensive "prefill" workload across the cluster. If a request has existing cache hits, the scorer assigns equal scores to all endpoints (scorer has no impact).
+
 
 ### Pickers
 *   **[`max-score-picker`](placeholder-link)**: Selects the endpoint with the absolute highest score.
@@ -94,7 +103,8 @@ When a profile runs, it first filters the candidate endpoints. If any remain, it
 *   **[`weighted-random-picker`](placeholder-link)**: Selects an endpoint randomly, using the scores as relative probabilities (lottery scheduling).
 
 ### Profile Handlers
-*   **[`single-profile-handler`](placeholder-link)**: A standard implementation that runs a single configured primary profile.
+*   **[`single-profile-handler`](placeholder-link)**: Runs a single configured primary profile.
+*   **[`disagg-profile-handler`](placeholder-link)**: Runs two scheduling profiles, one for prefill and one for decode. The **decode endpoint** is set as the primary destination for the proxy to forward the original request, while the **prefill endpoint** is injected into the request as a specialized header.
 
 ---
 
