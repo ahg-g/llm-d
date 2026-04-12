@@ -10,22 +10,24 @@ The scheduler follows a **Filter -> Score -> Pick** lifecycle for every request.
 flowchart LR
     Req[Inference Request] --> S[Scheduler.Schedule]
     
-    subgraph Scheduling Cycle
+    subgraph Cycle [Scheduling Cycle]
+        direction LR
         S --> Pick[ProfileHandler.Pick]
-        Pick -->|List of Profiles| Loop{For each Profile}
+        Pick -->|Profiles| Loop{For each Profile}
         
-        subgraph Profile Execution
+        subgraph Exec [Profile Execution]
+            direction TB
             Loop --> Filters[Filters]
-            Filters -->|Filtered Endpoints| Scorers[Scorers]
-            Scorers -->|Weighted Scores| Picker[Picker]
+            Filters --> Scorers[Scorers]
+            Scorers --> Picker[Picker]
             Picker --> Result[ProfileRunResult]
         end
         
         Result -->|Collect| Pick
-        Pick -->|No more profiles| PRs[ProfileHandler.ProcessResults]
+        Pick -->|Done| PRs[ProfileHandler.ProcessResults]
     end
     
-    PRs -->|SchedulingResult| Target["Selected Endpoint(s)"]
+    PRs --> Target["Selected Endpoint(s)"]
 ```
 
 ### Core Components
