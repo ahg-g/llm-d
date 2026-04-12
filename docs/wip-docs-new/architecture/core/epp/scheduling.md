@@ -32,15 +32,14 @@ flowchart TD
     %% Styling
     style Req fill:#e1f5fe,stroke:#01579b
     style S fill:#e8f5e9,stroke:#2e7d32
-    style Cycle fill:#fff9c4,stroke:#fbc02d
-    style Exec fill:#ffe0b2,stroke:#ef6c00
+    style Pick fill:#fffde7,stroke:#fbc02d
+    style Loop fill:#fff,stroke:#333
     style Filters fill:#fff3e0,stroke:#ff9800
     style Scorers fill:#fff3e0,stroke:#ff9800
     style Picker fill:#fff3e0,stroke:#ff9800
+    style Result fill:#f1f8e9,stroke:#558b2f
+    style PRs fill:#fce4ec,stroke:#c2185b
     style Target fill:#f3e5f5,stroke:#7b1fa2
-    style Loop fill:#fff,stroke:#333
-    style Pick fill:#fff,stroke:#333
-    style PRs fill:#fff,stroke:#333
 ```
 
 ### Core Components
