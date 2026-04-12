@@ -8,15 +8,24 @@ The scheduler follows a **Filter -> Score -> Pick** lifecycle for every request.
 
 ```mermaid
 flowchart TD
-    Req[Inference Request] --> S[Scheduler]
+    Req[LLM Request] --> S[Scheduler.Schedule]
     
     subgraph Scheduling Cycle
-        S --> Filter[Filters]
-        Filter --> Score[Scorers]
-        Score --> Pick[Picker]
+        S --> Pick[ProfileHandler.Pick]
+        Pick -->|List of Profiles| Loop{For each Profile}
+        
+        subgraph Profile Execution
+            Loop --> Filters[Filters]
+            Filters -->|Filtered Endpoints| Scorers[Scorers]
+            Scorers -->|Weighted Scores| Picker[Picker]
+            Picker --> Result[ProfileRunResult]
+        end
+        
+        Result -->|Collect| Pick
+        Pick -->|No more profiles| PRs[ProfileHandler.ProcessResults]
     end
     
-    Pick --> Target["Selected Endpoint(s)"]
+    PRs -->|SchedulingResult| Target["Selected Endpoint(s)"]
 ```
 
 ### Core Components
@@ -83,5 +92,23 @@ In a P/D Disagg setup, the `ProfileHandler` orchestrates two separate `Scheduler
 1.  **Prefill Profile**: Evaluates and scores endpoints specialized for compute-heavy prompt processing. It may use filters and scorers focused on prefix cache affinity, queue depth, or token load.
 2.  **Decode Profile**: Evaluates and scores endpoints specialized for memory-bandwidth-bound token generation.
 
-The `ProfileHandler` uses the `Pick` extension point to determine which profiles need to run for a given request (e.g., if a request needs both prefill and decode, or just decode if the KV cache is already transferred). The prefill and decode endpoints are picked at the same time. The `ProfileHandler` then uses the `ProcessResults` extension point to merge the results from both profiles. This merging ensures that the **decode endpoint** is returned as the primary destination for the proxy to forward the original request. Simultaneously, the **prefill endpoint** is injected into the request as a specialized header. When the request reaches the decode worker, the **sidecar** running alongside the decoder intercepts it, extracts the prefill endpoint from the header, and coordinates a remote prefill from the selected prefill worker before the decoding process begins.
 
+```mermaid
+flowchart TD
+    Req[Inference Request] --> S[Scheduler]
+    S --> PH[ProfileHandler]
+    
+    subgraph Profiles [Scheduling Profiles]
+        direction TB
+        P1[Prefill Profile]
+        P2[Decode Profile]
+    end
+
+    PH -->|Pick| Profiles
+    Profiles -->|Results| PR[Process Results]
+    PR --> Target[Selected Endpoints]
+```
+
+The `ProfileHandler` uses the `Pick` extension point to determine which profiles need to run for a given request (e.g., if a request needs both prefill and decode, or just decode if the KV cache is already transferred). If both are needed, the prefill and decode endpoints are picked at the same time. The `ProfileHandler` then uses the `ProcessResults` extension point to merge the results from both profiles. This merging ensures that the **decode endpoint** is returned as the primary destination for the proxy to forward the original request. Simultaneously, the **prefill endpoint** is injected into the request as a specialized header. When the request reaches the decode worker, the **sidecar** running alongside the decoder intercepts it, extracts the prefill endpoint from the header, and coordinates a remote prefill from the selected prefill worker before the decoding process begins.
+
+See [Disaggregated Serving](../../advanced/disaggregation.md) for more details on the design and request flow.
