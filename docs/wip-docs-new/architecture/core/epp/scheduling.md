@@ -1,6 +1,6 @@
 # EPP Scheduler
 
-The EPP Scheduler is a highly modular and extensible component within the Endpoint Picker (EPP) designed to select the optimal model server (endpoint) for an LLM request. It leverages a plugin-based architecture, allowing for sophisticated scheduling strategies based on real-time metrics, prefix caching, and model-specific requirements like LoRA adapters.
+The EPP Scheduler is a highly modular and extensible component within the Endpoint Picker (EPP) designed to select the optimal model server (endpoint) for an Inference request. It leverages a plugin-based architecture, allowing for sophisticated scheduling strategies based on real-time metrics, prefix caching, and model-specific requirements like LoRA adapters.
 
 ## Architecture Overview
 
@@ -8,24 +8,15 @@ The scheduler follows a **Filter -> Score -> Pick** lifecycle for every request.
 
 ```mermaid
 flowchart TD
-    Req[LLM Request] --> S[Scheduler.Schedule]
+    Req[Inference Request] --> S[Scheduler]
     
     subgraph Scheduling Cycle
-        S --> Pick[ProfileHandler.Pick]
-        Pick -->|List of Profiles| Loop{For each Profile}
-        
-        subgraph Profile Execution
-            Loop --> Filters[Filters]
-            Filters -->|Filtered Endpoints| Scorers[Scorers]
-            Scorers -->|Weighted Scores| Picker[Picker]
-            Picker --> Result[ProfileRunResult]
-        end
-        
-        Result -->|Collect| Pick
-        Pick -->|No more profiles| PRs[ProfileHandler.ProcessResults]
+        S --> Filter[Filters]
+        Filter --> Score[Scorers]
+        Score --> Pick[Picker]
     end
     
-    PRs -->|SchedulingResult| Target["Selected Endpoint(s)"]
+    Pick --> Target["Selected Endpoint(s)"]
 ```
 
 ### Core Components
@@ -92,5 +83,5 @@ In a P/D Disagg setup, the `ProfileHandler` orchestrates two separate `Scheduler
 1.  **Prefill Profile**: Evaluates and scores endpoints specialized for compute-heavy prompt processing. It may use filters and scorers focused on prefix cache affinity, queue depth, or token load.
 2.  **Decode Profile**: Evaluates and scores endpoints specialized for memory-bandwidth-bound token generation.
 
-The `ProfileHandler` uses the `Pick` extension point to determine which profiles need to run for a given request (e.g., if a request needs both prefill and decode, or just decode if the KV cache is already transferred). The prefill and decode endpoints are picked at the same time. The `ProfileHandler` then uses the `ProcessResults` extension point to aggregate the selected endpoints. The decode endpoint is the one that will be returned to the proxy to forward the request to, while the prefill endpoint is added as a header that the decode sidecar uses to perform remote prefill.
+The `ProfileHandler` uses the `Pick` extension point to determine which profiles need to run for a given request (e.g., if a request needs both prefill and decode, or just decode if the KV cache is already transferred). The prefill and decode endpoints are picked at the same time. The `ProfileHandler` then uses the `ProcessResults` extension point to merge the results from both profiles. This merging ensures that the **decode endpoint** is returned as the primary destination for the proxy to forward the original request. Simultaneously, the **prefill endpoint** is injected into the request as a specialized header. When the request reaches the decode worker, the **sidecar** running alongside the decoder intercepts it, extracts the prefill endpoint from the header, and coordinates a remote prefill from the selected prefill worker before the decoding process begins.
 
