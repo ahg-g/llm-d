@@ -84,7 +84,7 @@ Verify the pods are running:
 kubectl get pods -l app=my-model
 ```
 
-## Step 4: Deploy the Gateway
+## Step 3: Deploy the Gateway
 
 The key choice for deployment is whether you want to create a regional internal Application Load Balancer - accessible only to workloads within your VPC (class name: `gke-l7-rilb`) - or a regional external Application Load Balancer - accessible to the internet (class name: `gke-l7-regional-external-managed`). Here is an example for creating a regional external one:
 
@@ -119,7 +119,7 @@ llm-d-inference-gateway   gke-l7-regional-external-managed   xx.xx.xx.xx     Tru
 Wait until `PROGRAMMED` shows `True` before proceeding.
 
 
-## Step 5: Deploy the InferencePool and EPP
+## Step 4: Deploy the InferencePool and EPP
 
 Deploy the `InferencePool` and EPP with the Helm chart using `provider.name=gke`.
 
@@ -154,7 +154,7 @@ inferencepool.inference.networking.k8s.io/llm-d-infpool    30s
 The EPP pod shows `1/1` rather than `2/2` because there is no sidecar proxy in
 this setup. GKE manages the gateway proxy separately.
 
-## Step 6: Configure the HTTPRoute
+## Step 5: Configure the HTTPRoute
 
 Create an `HTTPRoute` to connect the `Gateway` to the `InferencePool`. When
 traffic reaches the `Gateway` with this route, the proxy consults the EPP and
@@ -195,7 +195,7 @@ kubectl get httproute llm-d-route -o yaml | grep -A5 "conditions:"
 
 Both `Accepted` and `ResolvedRefs` conditions should show `status: "True"`.
 
-## Step 7: Send a Request
+## Step 6: Send a Request
 
 Get the `Gateway` external address:
 
