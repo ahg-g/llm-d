@@ -4,7 +4,7 @@ The model server is the component that runs inference on a model. llm-d supports
 
 ## Functionality
 
-A model server loads a model onto one or more accelerators (GPUs, TPUs, etc.) and exposes an OpenAI-compatible API for inference requests. In the llm-d architecture, model servers are the compute layer -- they execute the actual prefill and decode steps that generate tokens.
+A model server loads a model onto one or more accelerators (GPUs, TPUs, etc.) and exposes a supported API, such as OpenAI-compatible API, for inference requests. In the llm-d architecture, model servers are the compute layer -- they execute the actual prefill and decode steps that generate tokens.
 
 Model servers are the lowest layer in the llm-d stack:
 
@@ -49,6 +49,17 @@ metric types and semantics MUST follow this doc.
 | KVCacheUtilization| Gauge     | The current KV cache utilization in percentage.| `vllm:kv_cache_usage_perc`| `nv_trt_llm_kv_cache_block_metrics{kv_cache_block_type=fraction}`| `trtllm_kv_cache_utilization` | `sglang:token_usage`
 | [Optional] BlockSize         | Labeled/Gauge     | The block size in tokens to allocate memory, used by the prefix cache scorer. If this metric is not available, the BlockSize will be derived from the [prefix plugin config](https://gateway-api-inference-extension.sigs.k8s.io/guides/epp-configuration/prefix-aware/#customize-the-prefix-cache-plugin).| name: `vllm:cache_config_info`, label name: `block_size`| `nv_trt_llm_kv_cache_block_metrics{kv_cache_block_type=tokens_per}` | `trtllm_kv_cache_tokens_per_block` | name: `sglang:cache_config_info`, label name: `page_size`
 | [Optional] NumGPUBlocks| Labeled/Gauge     | The total number of blocks in the HBM KV cache, used by the prefix cache scorer. If this metric is not available, the NumGPUBlocks will be derived from the [prefix plugin config](https://gateway-api-inference-extension.sigs.k8s.io/guides/epp-configuration/prefix-aware/#customize-the-prefix-cache-plugin).| name: `vllm:cache_config_info`, label name: `num_gpu_blocks`| `nv_trt_llm_kv_cache_block_metrics{kv_cache_block_type=max}` | `trtllm_kv_cache_max_blocks` | name: `sglang:cache_config_info`, label name: `num_pages`
+
+
+To correctly map metrics names, model server Pods should be labeld with the model server type they are running as demonistrated below. Pods without the engine-type label will default to vLLM metrics names.
+
+
+```yaml
+metadata:
+  labels:
+    inference.networking.k8s.io/engine-type: vllm # other options: sglang, trtllm-serve, triton-tensorrt-llm 
+
+```
 
 
 ### LoRA Adapter Serving
