@@ -9,27 +9,22 @@ The Data Layer operates as a reactive and polling-based system that enriches `En
 ```mermaid
 flowchart LR
     subgraph Sources [Data Sources]
-        direction TD
-        Poller[Polling Source]
-        Notifier[K8s Notification Source]
-        EpEvent[Endpoint Event Source]
+        direction TB
+        Poller[Polling Source] ~~~ Notifier[K8s Notification Source] ~~~ EpEvent[Endpoint Event Source]
     end
 
     subgraph Runtime [Datalayer Runtime]
-        direction TD
-        Collector[Collector]
-        Mapping[Source-to-Extractor Mapping]
+        direction TB
+        Collector[Collector] --- Mapping[Source-to-Extractor Mapping]
     end
 
     subgraph Extractors [Extractors]
-        direction TD
-        Ext1[Metrics Extractor]
-        Ext2[GVK Extractor]
-        Ext3[Lifecycle Extractor]
+        direction TB
+        Ext1[Metrics Extractor] ~~~ Ext2[GVK Extractor] ~~~ Ext3[Lifecycle Extractor]
     end
 
-    Sources --> Runtime
-    Runtime --> Mapping
+    Sources --> Collector
+    Collector --> Mapping
     Mapping --> Extractors
     Extractors -->|Update| Attr[(Endpoint Attributes)]
 
@@ -77,13 +72,13 @@ Used for reacting to endpoint lifecycle events (Add, Update, Delete) within the 
 
 ### Sources
 
-- **[`metrics-data-source`](placehodler-link)** - polls a Prometheus-compatible metrics endpoint of a model server and parses the response into a structured format for extraction.
-- **[`k8s-notification-source`](placeholder-link)** — can be configured to watch a single Kubernetes GVK (either a CRD or a k8s core API) and
+- **[`metrics-data-source`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/datalayer/source/metrics)** - polls a Prometheus-compatible metrics endpoint of a model server and parses the response into a structured format for extraction.
+- **[`k8s-notification-source`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/datalayer/source/notifications)** — can be configured to watch a single Kubernetes GVK (either a CRD or a k8s core API) and
   dispatches `NotificationEvent`s to registered `NotificationExtractor`s when objects are created, updated, or deleted. Multiple extractors can
   be notified of GVK changes by a single source. There are currently no upstream extractors that require this source.
-- **[`endpoint-notification-source`](placeholder-link)** — delivers endpoint (aka model server engine) lifecycle events (add, update, delete) to registered `EndpointExtractor`s 
+- **[`endpoint-notification-source`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/datalayer/source/notifications)** — delivers endpoint (aka model server engine) lifecycle events (add, update, delete) to registered `EndpointExtractor`s 
   whenever an endpoint is added to or removed from the datastore. 
 
 ### Extractors
 
-- **[`core-metrics-extractor`](placehodler-link)** - responsible for extracting a set of model server metrics sourced from `metrics-data-source` and storing them as endpoint attributes (such as `KVCacheUsagePercent` and `WaitingQueueSize`), which scorers like `kv-cache-utilization-scorer` consumes. It supports multiple inference engines and can be configured to map engine-specific metric names to a standard set of internal keys. 
+- **[`core-metrics-extractor`](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/datalayer/extractor/metrics)** - responsible for extracting a set of model server metrics sourced from `metrics-data-source` and storing them as endpoint attributes (such as `KVCacheUsagePercent` and `WaitingQueueSize`), which scorers like `kv-cache-utilization-scorer` consume. It supports multiple inference engines and can be configured to map engine-specific metric names to a standard set of internal keys. 
