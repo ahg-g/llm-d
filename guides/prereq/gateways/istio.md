@@ -55,29 +55,12 @@ NAME                      READY   STATUS    RESTARTS   AGE
 istiod-xxxxxxxxxx-xxxxx   1/1     Running   0          30s
 ```
 
-## Step 3: Deploy Model Servers
-
-Deploy two replicas of vLLM running `Qwen/Qwen3-0.6B`:
-
-> [!NOTE]
-> This example uses NVIDIA GPUs. For CPU testing, use the vLLM Simulator (`ghcr.io/llm-d/llm-d-inference-sim:latest`).
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/robertgshaw2-redhat/llm-d/clean-up-common-yamls/helpers/manifests/vllm-deployment.yaml
-```
-
-Verify the pods are running:
-
-```bash
-kubectl get pods -l app=my-model
-```
-
-## Step 4: Deploy the Gateway
+## Step 3: Deploy the Gateway
 
 Create a `Gateway` resource. Istio watches this resource and creates an Envoy-based proxy that accepts incoming traffic.
 
 ```bash
-kubectl apply -k "https://github.com/robertgshaw2-redhat/llm-d/helpers/manifests/gateway/istio?ref=clean-up-common-yamls"
+kubectl apply -k ./guides/recipes/gateway/istio
 ```
 
 Verify the Gateway is programmed:
@@ -95,82 +78,36 @@ llm-d-inference-gateway   istio   10.xx.xx.xx     True         30s
 
 Wait until `PROGRAMMED` shows `True` before proceeding.
 
-## Step 5: Deploy an InferencePool and EPP
+## Step 4: Send a Request
 
-Deploy the `InferencePool` and EPP with the Helm chart, using `provider.name=istio`:
+> [!IMPORTANT]
+> Before you are able to send requests, you need to:
+> 1. Deploy one of the well-lit paths to create a model server deplooyment, `InferencePool` and an `HTTPRoute` to connect the Gateway to the `InferencePool`.
+> 2. Make sure the environment variables `${MODEL_NAME}` and `${GUIDE_NAME}` are set as part of deploying the well-lit path steps.
 
-```bash
-IGW_CHART_VERSION=v1.4.0
-
-helm install llm-d-infpool \
-  --dependency-update \
-  --set inferencePool.modelServers.matchLabels.app=my-model \
-  --set provider.name=istio \
-  --version ${IGW_CHART_VERSION} \
-  oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool
-```
-
-Verify the EPP is running and the `InferencePool` is created:
+Get the `Gateway` external address:
 
 ```bash
-kubectl get pods,inferencepool
+export IP=$(kubectl get gateway llm-d-inference-gateway -o jsonpath='{.status.addresses[0].value}')
 ```
 
-Expected output:
-
-```text
-NAME                                     READY   STATUS    RESTARTS   AGE
-pod/llm-d-infpool-epp-xxxxxxxxx-xxxxx    1/1     Running   0          30s
-
-NAME                                                       AGE
-inferencepool.inference.networking.k8s.io/llm-d-infpool    30s
-```
-
-The EPP pod shows `1/1` rather than `2/2` because there is no sidecar proxy in this setup. Istio manages the gateway proxy separately.
-
-## Step 6: Configure the HTTPRoute
-
-Create an `HTTPRoute` to connect the Gateway to the `InferencePool`. When traffic reaches the `Gateway` with this route, the Proxy will consult the EPP and forward the request to the selected pod.
+Send an inference request via the managed `Gateway`:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/robertgshaw2-redhat/llm-d/clean-up-common-yamls/helpers/manifests/httproute/httproute.yaml
-```
-
-Verify the HTTPRoute is accepted:
-
-```bash
-kubectl get httproute llm-d-route -o yaml | grep -A5 "conditions:"
-```
-
-Both `Accepted` and `ResolvedRefs` conditions should show `status: "True"`.
-
-## Step 7: Send a Request
-
-Get the Gateway's external address:
-
-```bash
-export GATEWAY_IP=$(kubectl get gateway llm-d-inference-gateway -o jsonpath='{.status.addresses[0].value}')
-```
-
-Send an inference request through the Istio Gateway:
-
-```bash
-curl -s http://${GATEWAY_IP}/v1/chat/completions \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "model": "Qwen/Qwen3-0.6B",
-    "messages": [{"role": "user", "content": "Hello, who are you?"}],
-    "max_tokens": 50
-  }'
+curl -X POST http://${IP}/v1/completions \
+    -H 'Content-Type: application/json' \
+    -H 'X-Gateway-Base-Model-Name: '"$GUIDE_NAME"'' \
+    -d '{
+        "model": '\"${MODEL_NAME}\"',
+        "prompt": "How are you today?"
+    }' | jq
 ```
 
 ## Cleanup
 
 ```bash
 kubectl delete httproute llm-d-route
-helm uninstall llm-d-infpool
 kubectl delete gateway llm-d-inference-gateway
-kubectl delete deployment my-model
 istioctl uninstall --purge -y
 kubectl delete namespace istio-system
 kubectl delete gatewayclass istio istio-remote
@@ -189,16 +126,6 @@ kubectl logs -n istio-system deployment/istiod --tail=20
 ```
 
 Verify Istio was installed with the inference extension flag enabled.
-
-### EPP pod in CrashLoopBackOff
-
-```bash
-kubectl logs <epp-pod-name> --tail=20
-```
-
-Common causes:
-* InferencePool not created: check `kubectl get inferencepool`
-* CRDs not installed: check `kubectl get crd | grep inference`
 
 ### HTTPRoute not accepted
 
