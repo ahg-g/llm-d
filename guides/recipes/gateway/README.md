@@ -11,5 +11,5 @@ This directory contains recipes for deploying a `Gateway` called `llm-d-inferenc
 A `Gateway` can be deployed with:
 
 ```bash
-kubectl apply -k ${YOUR_GATEWAY}
+kubectl apply -k ${YOUR_GATEWAY} -n ${NAMESPACE}
 ```

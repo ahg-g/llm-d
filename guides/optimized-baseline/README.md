@@ -53,12 +53,16 @@ This guide includes configurations for the following accelerators:
   ```bash
     export GAIE_VERSION=v1.4.0
     export GUIDE_NAME="optimized-baseline"
-    export MODEL_NAME="Qwen/Qwen3-32B"
+    export NAMESPACE=llm-d-optimized-baseline
   ```
 - Install the Gateway API Inference Extension CRDs:
 
   ```bash
     kubectl apply -k "https://github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=${GAIE_VERSION}"
+  ```
+- Create a target namespace for the installation
+  ```bash
+      kubectl create namespace ${NAMESPACE}
   ```
 
 ## Installation Instructions
@@ -74,7 +78,7 @@ helm install ${GUIDE_NAME} \
     oci://registry.k8s.io/gateway-api-inference-extension/charts/standalone \
     -f guides/recipes/scheduler/base.values.yaml \
     -f guides/${GUIDE_NAME}/scheduler/${GUIDE_NAME}.values.yaml \
-    --version v1.4.0
+    -n ${NAMESPACE} --version v1.4.0
 ```
 
 <details>
@@ -95,7 +99,7 @@ helm install ${GUIDE_NAME} \
     --set experimentalHttpRoute.enabled=true \
     --set experimentalHttpRoute.inferenceGatewayName=llm-d-inference-gateway \
     --set experimentalHttpRoute.baseModel=${GUIDE_NAME} \
-    --version v1.4.0
+    -n ${NAMESPACE} --version v1.4.0
 ```
 
 </details>
@@ -106,7 +110,7 @@ helm install ${GUIDE_NAME} \
 Apply the Kustomize overlays for your specific backend (defaulting to NVIDIA GPU / vLLM):
 
 ```bash
-kubectl apply -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/
+kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/
 ```
 
 ### 3. Enable monitoring (optional)
@@ -118,7 +122,7 @@ kubectl apply -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/
 - Deploy the monitoring resources for this guide.
 
 ```bash
-kubectl apply -k guides/recipes/modelserver/components/monitoring
+kubectl apply -n ${NAMESPACE} -k guides/recipes/modelserver/components/monitoring
 ```
 
 ## Verification
@@ -128,14 +132,14 @@ kubectl apply -k guides/recipes/modelserver/components/monitoring
 **Standalone Mode**
 
 ```bash
-export IP=$(kubectl get service ${GUIDE_NAME}-epp -o jsonpath='{.spec.clusterIP}')
+export IP=$(kubectl get service ${GUIDE_NAME}-epp -n ${NAMESPACE} -o jsonpath='{.spec.clusterIP}')
 ```
 
 <details>
 <summary> <b>Gateway Mode</b> </summary>
 
 ```bash
-export IP=$(kubectl get gateway llm-d-inference-gateway -o jsonpath='{.status.addresses[0].value}')
+export IP=$(kubectl get gateway llm-d-inference-gateway -n ${NAMESPACE} -o jsonpath='{.status.addresses[0].value}')
 ```
 </details>
 
@@ -147,7 +151,7 @@ export IP=$(kubectl get gateway llm-d-inference-gateway -o jsonpath='{.status.ad
 kubectl run curl-debug --rm -it \
     --image=cfmanteiga/alpine-bash-curl-jq \
     --env="IP=$IP" \
-    --env="GUIDE_NAME=$GUIDE_NAME" \
+    --env="NAMESPACE=$NAMESPACE" \
     -- /bin/bash
 ```
 
@@ -156,9 +160,8 @@ kubectl run curl-debug --rm -it \
 ```bash
 curl -X POST http://${IP}/v1/completions \
     -H 'Content-Type: application/json' \
-    -H 'X-Gateway-Base-Model-Name: '"$GUIDE_NAME"'' \
     -d '{
-        "model": '\"${MODEL_NAME}\"',
+        "model": "Qwen/Qwen3-32B",
         "prompt": "How are you today?"
     }' | jq
 ```
@@ -189,14 +192,14 @@ curl -LJO "https://raw.githubusercontent.com/llm-d/llm-d/main/guides/${GUIDE_NAM
 ### 3. Execute Benchmark
 
 ```bash
-export IP=$(kubectl get service ${GUIDE_NAME}-epp -o jsonpath='{.spec.clusterIP}')
+export IP=$(kubectl get service ${GUIDE_NAME}-epp  -n ${NAMESPACE} -o jsonpath='{.spec.clusterIP}')
 ```
 
 <details>
 <summary> <b>Click here for Gateway Mode</b> </summary>
 
 ```bash
-export IP=$(kubectl get gateway llm-d-inference-gateway -o jsonpath='{.status.addresses[0].value}')
+export IP=$(kubectl get gateway llm-d-inference-gateway  -n ${NAMESPACE} -o jsonpath='{.status.addresses[0].value}')
 ```
 </details>
 
@@ -211,8 +214,8 @@ envsubst < shared_prefix.yaml > config.yaml
 To remove the deployed components:
 
 ```bash
-helm uninstall ${GUIDE_NAME}
-kubectl delete -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/
+helm uninstall ${GUIDE_NAME} -n ${NAMESPACE}
+kubectl delete  -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/
 ```
 
 ## Benchmarking Report
