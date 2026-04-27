@@ -128,7 +128,7 @@ helm install llm-d-infpool \
 
 ### Deploy Gateway and HTTPRoute
 
-Deploy the Gateway and HTTPRoute using the [gateway recipe](../recipes/gateway/README.md).
+Deploy the Gateway and HTTPRoute using the [gateway recipe](../recipes/gateway-old/README.md).
 
 ### Gateway options
 
@@ -248,7 +248,7 @@ To remove the deployment:
 helm uninstall llm-d-infpool -n ${NAMESPACE}
 kubectl delete -k ./manifests/modelserver/<gke|coreweave> -n ${NAMESPACE}
 # Supported self-installed inference gateway recipe paths are agentgateway (preferred) and kgateway (deprecated migration path).
-kubectl delete -k ../recipes/gateway/<gke-l7-regional-external-managed|istio|agentgateway|agentgateway-openshift|kgateway|kgateway-openshift> -n ${NAMESPACE}
+kubectl delete -k ../recipes/gateway-old/<gke-l7-regional-external-managed|istio|agentgateway|agentgateway-openshift|kgateway|kgateway-openshift> -n ${NAMESPACE}
 ```
 
 ## Customization
