@@ -83,10 +83,10 @@ helm install ${GUIDE_NAME} \
 To employ a Kubernetes Gateway managed proxy instead of the standalone one, then instead of applying the standalone helm chart above, do the following:
 
 1. *Deploy a Kubernetes Gateway*. Follow [the gateway guides](../prereq/gateways) for step by step deployment for a Gateway named `llm-d-inference-gateway`. You only need to create one Gateway for your cluster, all guides can share one Gateway each with a separate HTTPRoute. 
-2. *Deploy the Inference Scheduler and HTTPRoute*. The following deploys the inference scheduler with an HttpRoute that connects it to the Gateway created in the previous step (set `provider.name` to the gateway provider you deployed):
+2. *Deploy the Inference Scheduler and HTTPRoute*. The following deploys the inference scheduler with an `HttpRoute` that connects it to the Gateway created in the previous step (set `provider.name` to the gateway provider you deployed):
 
 ```bash
-export PROVIDER_NAME=gke # other na, agentgateway or istio
+export PROVIDER_NAME=gke # options: none, gke, agentgateway, istio
 helm install ${GUIDE_NAME} \
     oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool  \
     -f guides/recipes/scheduler/base.values.yaml \
@@ -189,8 +189,19 @@ curl -LJO "https://raw.githubusercontent.com/llm-d/llm-d/main/guides/${GUIDE_NAM
 ### 3. Execute Benchmark
 
 ```bash
-export GATEWAY_SVC=${GUIDE_NAME}-epp
-export PORT=80
+export IP=$(kubectl get service ${GUIDE_NAME}-epp -o jsonpath='{.spec.clusterIP}')
+```
+
+<details>
+<summary> <b>Click here for Gateway Mode</b> </summary>
+
+```bash
+export IP=$(kubectl get gateway llm-d-inference-gateway -o jsonpath='{.status.addresses[0].value}')
+```
+</details>
+
+```bash
+export NAMESPACE=default
 envsubst < shared_prefix.yaml > config.yaml
 ./run_only.sh -c config.yaml -o ./results
 ```
