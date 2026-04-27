@@ -82,7 +82,7 @@ Wait until `PROGRAMMED` shows `True` before proceeding.
 ## Step 4: Send a Request
 
 > [!IMPORTANT]
-> Remeber, before you are able to send requests, you need to deploy one of well-lit paths guides, which create a model server deployment, `InferencePool` and an `HTTPRoute` to connect the Gateway to the `InferencePool`.
+> Before sending requests, you must deploy a well-lit path guide. This sets up a model server deployment, an `InferencePool`, and an `HTTPRoute` to connect the Gateway to the pool.
 
 Get the `Gateway` external address:
 

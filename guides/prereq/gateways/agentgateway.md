@@ -108,9 +108,7 @@ Wait until `PROGRAMMED` shows `True` before proceeding.
 ## Step 4: Send a Request
 
 > [!IMPORTANT]
-> Before you are able to send requests, you need to:
-> 1. Deploy one of the well-lit paths to create a model server deployment, `InferencePool` and an `HTTPRoute` to connect the Gateway to the `InferencePool`.
-> 2. Make sure the environment variables `${MODEL_NAME}` and `${GUIDE_NAME}` are set as part of deploying the well-lit path steps.
+> Before sending requests, you must deploy a well-lit path guide. This sets up a model server deployment, an `InferencePool`, and an `HTTPRoute` to connect the Gateway to the pool.
 
 Get the `Gateway` external address:
 
