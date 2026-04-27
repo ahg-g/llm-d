@@ -6,15 +6,14 @@ end, inference requests will flow from an agentgateway-managed `Gateway` to
 your model servers via the llm-d EPP.
 
 > [!NOTE]
-> This guide assumes familiarity with
-> [Gateway API](https://gateway-api.sigs.k8s.io/) and llm-d.
+> This guide assumes familiarity with [Gateway API](https://gateway-api.sigs.k8s.io/) and llm-d.
 
 ## Prerequisites
 
-* A Kubernetes cluster running one of the three most recent
-  [Kubernetes releases](https://kubernetes.io/releases/)
-* [Helm](https://helm.sh/docs/intro/install/)
-* [jq](https://jqlang.org/download/)
+1. The environment variables `${GUIDE_NAME}`, `${MODEL_NAME}` and `${NAMESPACE}` should be set as part of deploying one of the well-lit path guides.
+2. A Kubernetes cluster running one of the three most recent [Kubernetes releases](https://kubernetes.io/releases/)
+3. [Helm](https://helm.sh/docs/intro/install/)
+4. [jq](https://jqlang.org/download/)
 
 ## Step 1: Install Gateway API and Gateway API Inference Extension CRDs
 
@@ -78,7 +77,7 @@ agentgateway   agentgateway.dev/agentgateway   True       30s
 This deploys a gateway suitable for `agentgateway`, using the `agentgateway` gateway class. This is the preferred self-installed inference gateway recipe in llm-d.
 
 ```bash
-kubectl apply -k ./guides/recipes/gateway/agentgateway
+kubectl apply -k ./guides/recipes/gateway/agentgateway -n ${NAMESPACE}
 ```
 
 ### Agentgateway (OpenShift)
@@ -88,13 +87,13 @@ recipe. The rendered `Gateway` uses the `agentgateway` GatewayClass and an
 OpenShift-oriented `AgentgatewayParameters` resource.
 
 ```bash
-kubectl apply -k ./guides/recipes/gateway/agentgateway-openshift
+kubectl apply -k ./guides/recipes/gateway/agentgateway-openshift -n ${NAMESPACE}
 ```
 
 Verify the `Gateway` is programmed:
 
 ```bash
-kubectl get gateway llm-d-inference-gateway
+kubectl get gateway llm-d-inference-gateway -n ${NAMESPACE}
 ```
 
 Expected output:
@@ -116,7 +115,7 @@ Wait until `PROGRAMMED` shows `True` before proceeding.
 Get the `Gateway` external address:
 
 ```bash
-export IP=$(kubectl get gateway llm-d-inference-gateway -o jsonpath='{.status.addresses[0].value}')
+export IP=$(kubectl get gateway llm-d-inference-gateway -n ${NAMESPACE} -o jsonpath='{.status.addresses[0].value}')
 ```
 
 Send an inference request via the managed `Gateway`:
@@ -135,7 +134,7 @@ curl -X POST http://${IP}/v1/completions \
 ## Cleanup
 
 ```bash
-kubectl delete gateway llm-d-inference-gateway
+kubectl delete gateway llm-d-inference-gateway -n ${NAMESPACE}
 helm uninstall agentgateway -n agentgateway-system
 helm uninstall agentgateway-crds -n agentgateway-system
 kubectl delete namespace agentgateway-system
@@ -149,7 +148,7 @@ kubectl delete -k "https://github.com/kubernetes-sigs/gateway-api-inference-exte
 ### Gateway not showing `PROGRAMMED=True`
 
 ```bash
-kubectl describe gateway llm-d-inference-gateway
+kubectl describe gateway llm-d-inference-gateway -n ${NAMESPACE}
 kubectl get pods -n agentgateway-system
 kubectl logs -n agentgateway-system deployment/agentgateway --tail=20
 ```
@@ -163,7 +162,7 @@ kubectl get gatewayclass agentgateway
 ### HTTPRoute not accepted
 
 ```bash
-kubectl describe httproute llm-d-route
+kubectl describe httproute ${GUIDE_NAME} -n ${NAMESPACE}
 ```
 
 Verify that `parentRefs` matches the Gateway name and `backendRefs` matches the InferencePool name.
@@ -171,7 +170,7 @@ Verify that `parentRefs` matches the Gateway name and `backendRefs` matches the 
 ### No response from Gateway IP
 
 ```bash
-kubectl get gateway llm-d-inference-gateway -o jsonpath='{.status.addresses[0].value}'
+kubectl get gateway llm-d-inference-gateway -n ${NAMESPACE} -o jsonpath='{.status.addresses[0].value}'
 ```
 
 If the address is empty, your Gateway may still be waiting for a LoadBalancer service. Check that your cluster supports external load balancers.

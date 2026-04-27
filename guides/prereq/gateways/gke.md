@@ -9,12 +9,13 @@ This guide shows how to deploy llm-d with
 
 ## Prerequisites
 
-The following steps from the [GKE Inference Gateway deployment documentation](https://cloud.google.com/kubernetes-engine/docs/how-to/deploy-gke-inference-gateway) should be run:
+1. The environment variables `${GUIDE_NAME}`, `${MODEL_NAME}` and `${NAMESPACE}` should be set as part of deploying one of the well-lit path guides.
 
-1. [Verify your prerequisites](https://cloud.google.com/kubernetes-engine/docs/how-to/deploy-gke-inference-gateway#before-you-begin)
-2. [Configure a proxy-only subnet](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-gateways#configure_a_proxy-only_subnet)
-3. [Enable Gateway API in your cluster](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-gateways#enable-gateway)
-4. [Verify your cluster](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-gateways#verify-internal)
+2. The following steps from the [GKE Inference Gateway deployment documentation](https://cloud.google.com/kubernetes-engine/docs/how-to/deploy-gke-inference-gateway) should be run:
+  * [Verify your prerequisites](https://cloud.google.com/kubernetes-engine/docs/how-to/deploy-gke-inference-gateway#before-you-begin)
+  * [Configure a proxy-only subnet](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-gateways#configure_a_proxy-only_subnet)
+  * [Enable Gateway API in your cluster](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-gateways#enable-gateway)
+  * [Verify your cluster](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-gateways#verify-internal)
 
 ## Step 1: Install Gateway Inference CRDs
 
@@ -42,7 +43,7 @@ The key choice for deployment is whether you want an internal or external load b
 The class name is `gke-l7-regional-external-managed`. They are accessible to the internet. Here is an example for creating one:
 
 ```bash
-kubectl apply -k "./guides/recipes/gateway/gke-l7-regional-external-managed"
+kubectl apply -n ${NAMESPACE} -k "./guides/recipes/gateway/gke-l7-regional-external-managed"
 ```
 
 ### Regional Internal Application Load Balancer
@@ -50,7 +51,7 @@ kubectl apply -k "./guides/recipes/gateway/gke-l7-regional-external-managed"
 The class name is `gke-l7-rilb`. They are accessible only to workloads within your VPC. Here is an example for creating one:
 
 ```bash
-kubectl apply -k "./guides/recipes/gateway/gke-l7-rilb"
+kubectl apply -n ${NAMESPACE} -k "./guides/recipes/gateway/gke-l7-rilb"
 ```
 
 ## Step 3: Verify the Gateway
@@ -58,7 +59,7 @@ kubectl apply -k "./guides/recipes/gateway/gke-l7-rilb"
 Verify the `Gateway` is programmed:
 
 ```bash
-kubectl get gateway llm-d-inference-gateway
+kubectl get gateway -n ${NAMESPACE} llm-d-inference-gateway
 ```
 
 Expected output:
@@ -74,14 +75,12 @@ Wait until `PROGRAMMED` shows `True` before proceeding.
 ## Step 4: Send a Request
 
 > [!IMPORTANT]
-> Before you are able to send requests, you need to:
-> 1. Deploy one of the well-lit paths to create a model server deployment, `InferencePool` and an `HTTPRoute` to connect the Gateway to the `InferencePool`.
-> 2. Make sure the environment variables `${MODEL_NAME}` and `${GUIDE_NAME}` are set as part of deploying the well-lit path steps.
+> Remeber, before you are able to send requests, you need to deploy one of well-lit paths guides, which create a model server deployment, `InferencePool` and an `HTTPRoute` to connect the Gateway to the `InferencePool`.
 
 Get the `Gateway` external address:
 
 ```bash
-export IP=$(kubectl get gateway llm-d-inference-gateway -o jsonpath='{.status.addresses[0].value}')
+export IP=$(kubectl get gateway llm-d-inference-gateway -n ${NAMESPACE} -o jsonpath='{.status.addresses[0].value}')
 ```
 
 Send an inference request via the managed `Gateway`:
@@ -89,7 +88,6 @@ Send an inference request via the managed `Gateway`:
 ```bash
 curl -X POST http://${IP}/v1/completions \
     -H 'Content-Type: application/json' \
-    -H 'X-Gateway-Base-Model-Name: '"$GUIDE_NAME"'' \
     -d '{
         "model": '\"${MODEL_NAME}\"',
         "prompt": "How are you today?"
@@ -99,7 +97,7 @@ curl -X POST http://${IP}/v1/completions \
 ## Cleanup
 
 ```bash
-kubectl delete gateway llm-d-inference-gateway
+kubectl delete gateway llm-d-inference-gateway -n ${NAMESPACE}
 ```
 
 ## Troubleshooting
@@ -107,7 +105,7 @@ kubectl delete gateway llm-d-inference-gateway
 ### Gateway not showing `PROGRAMMED=True`
 
 ```bash
-kubectl describe gateway llm-d-inference-gateway
+kubectl describe gateway llm-d-inference-gateway -n ${NAMESPACE}
 ```
 
 Verify all prerequisites were applied, especially [enabling Gateway API in your cluster](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-gateways#enable-gateway) and [configuring a proxy-only subnet](https://cloud.google.com/kubernetes-engine/docs/how-to/deploying-gateways#configure_a_proxy-only_subnet). Also make sure the cluster is running [a supported GKE version](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/deploy-gke-inference-gateway#gateway-controller-requirements).
@@ -115,7 +113,7 @@ Verify all prerequisites were applied, especially [enabling Gateway API in your 
 ### HTTPRoute not accepted
 
 ```bash
-kubectl describe httproute ${GUIDE_NAME}
+kubectl describe httproute ${GUIDE_NAME} -n ${NAMESPACE}
 ```
 
 Verify that `parentRefs` matches the Gateway name and `backendRefs` matches the InferencePool name.
@@ -123,7 +121,7 @@ Verify that `parentRefs` matches the Gateway name and `backendRefs` matches the 
 ### No response from Gateway IP
 
 ```bash
-kubectl get gateway llm-d-inference-gateway -o jsonpath='{.status.addresses[0].value}'
+kubectl get gateway llm-d-inference-gateway  -n ${NAMESPACE} -o jsonpath='{.status.addresses[0].value}'
 ```
 
 If the address is empty, your Gateway may still be waiting for a LoadBalancer service. Check that your cluster supports external load balancers.

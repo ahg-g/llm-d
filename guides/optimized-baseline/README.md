@@ -54,6 +54,7 @@ This guide includes configurations for the following accelerators:
     export GAIE_VERSION=v1.4.0
     export GUIDE_NAME="optimized-baseline"
     export NAMESPACE=llm-d-optimized-baseline
+    export MODEL_NAME="Qwen/Qwen3-32B"
   ```
 - Install the Gateway API Inference Extension CRDs:
 
@@ -84,10 +85,10 @@ helm install ${GUIDE_NAME} \
 <details>
 <summary><h4>Gateway Mode</h4></summary>
 
-To employ a Kubernetes Gateway managed proxy instead of the standalone one, then instead of applying the standalone helm chart above, do the following:
+To use a Kubernetes Gateway managed proxy rather than the standalone version, follow these steps instead of applying the previous Helm chart:
 
-1. *Deploy a Kubernetes Gateway*. Follow [the gateway guides](../prereq/gateways) for step by step deployment for a Gateway named `llm-d-inference-gateway`. You only need to create one Gateway for your cluster, all guides can share one Gateway each with a separate HTTPRoute. 
-2. *Deploy the Inference Scheduler and HTTPRoute*. The following deploys the inference scheduler with an `HttpRoute` that connects it to the Gateway created in the previous step (set `provider.name` to the gateway provider you deployed):
+1. *Deploy a Kubernetes Gateway* named by following one of [the gateway guides](../prereq/gateways).
+2. *Deploy the inference scheduler and an HTTPRoute* that connects it to the Gateway as follows:
 
 ```bash
 export PROVIDER_NAME=gke # options: none, gke, agentgateway, istio
@@ -98,7 +99,6 @@ helm install ${GUIDE_NAME} \
     --set provider.name=${PROVIDER_NAME} \
     --set experimentalHttpRoute.enabled=true \
     --set experimentalHttpRoute.inferenceGatewayName=llm-d-inference-gateway \
-    --set experimentalHttpRoute.baseModel=${GUIDE_NAME} \
     -n ${NAMESPACE} --version v1.4.0
 ```
 

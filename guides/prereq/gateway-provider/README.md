@@ -1,4 +1,4 @@
-#Gateway Provider Prerequisite
+# Gateway Provider Prerequisite
 
 > [!WARNING]
 > OBSOLETE, WILL BE REMOVED ONCE ALL GUIDES MIGRATE TO KUSTOMIZE 
