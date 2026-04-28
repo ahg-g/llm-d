@@ -11,44 +11,21 @@ The `InferencePool` performs two primary roles in the inference infrastructure:
 
 ## Architecture and Relations
 
-The following diagram visualizes how the `InferencePool` resource coordinates the different components:
+The following diagram visualizes how the `InferencePool` resource is involved in the control path of both the EPP and Gateway Controller:
 
-```text
-                                +-----------------------+
-                                |  Gateway Controller   |
-                                +-----------+-----------+
-                                            |
-                                            | (1) Watches InferencePool
-                                            |     to find EPP service
-                                            v
-+----------------+          +-----------------------+          +-----------------------+
-|                |   (2)    |                       |   (3)    |                       |
-|     Proxy      +---------->     EPP Service       +---------->   Model Server Pods   |
-|   (Envoy)      | ext-proc | (Endpoint Picker)     |  traffic |   (vLLM, SGLang, etc) |
-|                |          |                       |          |                       |
-+-------+--------+          +-----------+-----------+          +-----------+-----------+
-        ^                               ^                              ^
-        |                               |                              |
-        |          (4) Targets          |          (5) Discovers       |
-        +-------------------------------+------------------------------+
-                        |               |              |
-                        |      +--------+--------+     |
-                        +------+  InferencePool  +-----+
-                               |    Resource     |
-                               +-----------------+
-```
+![InferencePool](../../../assets/inferencepool.svg)
 
 ### 1. Endpoint Discovery (EPP Perspective)
 
-The EPP uses the `InferencePool` to understand which pods it is responsible for.
+The EPP uses the `InferencePool` to disocver which pods it can pick from.
 
-*   **Selector-based Discovery:** The `InferencePool` defines a `selector` (label matching). The EPP watches the Kubernetes API for Pods that match these labels within the same namespace.
+*   **Selector-based Discovery:** The `InferencePool` defines a `selector` (label matching). The EPP watches for Pods that match these labels within the same namespace.
 *   **Dynamic Membership:** As model server Pods are scaled up or down, or as their readiness state changes, the EPP automatically updates its internal list of healthy candidates.
 *   **Port Mapping:** The `targetPorts` in the `InferencePool` tell the EPP which ports on the discovered Pods are listening for inference traffic (e.g., port 8000 for vLLM).
 
 ### 2. Gateway Integration (Controller Perspective)
 
-When an `InferencePool` is used as a backend in an `HTTPRoute`, the Gateway controller uses the resource to configure the underlying proxy.
+When an `InferencePool` is used as a backendRef in an `HTTPRoute`, the Gateway controller uses the resource to configure the underlying proxy.
 
 *   **EPP Connectivity:** The `endpointPickerRef` (or `extensionRef`) in the `InferencePool` points to the EPP service. The Gateway controller uses this information to configure the proxy's `ext_proc` filter, ensuring that every request directed to the pool is first processed by the EPP.
 *   **Routing Logic:** The proxy is configured to "park" the request and wait for the EPP's decision. The EPP then instructs the proxy—via the `ext_proc` protocol—on which specific Pod IP from the discovered pool should receive the request.
@@ -56,6 +33,6 @@ When an `InferencePool` is used as a backend in an `HTTPRoute`, the Gateway cont
 
 ## Key Relationships
 
-*   **One-to-One Mapping:** Typically, one `InferencePool` corresponds to one logical deployment of a model (e.g., Llama-3-70B) and is served by one EPP deployment.
-*   **Decoupled Scaling:** The model servers can scale independently of the EPP. The `InferencePool` ensures the EPP is always aware of the current set of available backends.
+*   **One-to-One Mapping:** Typically, one `InferencePool` corresponds to one logical deployment of a model (e.g., Gemma4) and is served by one EPP deployment.
+*   **Decoupled Scaling:** The model servers can scale independently of the EPP. The `InferencePool` ensures the EPP is always aware of the current set of available endpoints.
 *   **Namespace Scoped:** All discovery and references (Pods, EPP Service, and the InferencePool itself) are strictly contained within the same Kubernetes namespace to maintain security and isolation boundaries.
