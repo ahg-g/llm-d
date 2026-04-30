@@ -36,7 +36,7 @@ The steps are:
 5. **Request Scheduling** -- Selecting the optimal endpoint from the available InferencePool, which involves evaluating each request against a configured set of scheduling plugins, such as filters and scorers.
 6. **Request Proxying** -- The EPP returns the address of the selected endpoint to the proxy, which then forwards the request to the corresponding model server endpoint.
 
-Asynchronously, the **Data layer** watches the Kubernetes API server for updates to relevant objects like InferencePools and Pods for endpoint discovery. It is also responsible for model servers metrics probing, and maintaining an internal state—such as a prefix cache tree—to inform the request processing components, Flow Control and Routing.
+Asynchronously, the **Data layer** watches the Kubernetes API server for updates to relevant objects like InferencePools and Pods for endpoint discovery. It is also responsible for model servers metrics probing, and maintaining an internal state—such as a prefix cache tree—to inform the request processing components, flow control and request scheduling.
 
 ### Layers
 
@@ -83,6 +83,6 @@ See [Flow Control](flow-control.md) for more details on the design.
 
 The scheduler acts as the core decision-making engine for intelligent request routing. It operates through a modular Filter → Score → Pick plugins pipeline orchestrated by a ProfileHandler plugin, allowing it to evaluate and select the most suitable model server endpoints for each incoming request. 
 
-By leveraging custom plugins at each stage—filtering out unavailable endpoints, scoring them based on metrics like "least-loaded" or "affinity," and picking final candidates—the router ensures high performance and efficient resource distribution across inference pools.
+By leveraging custom plugins at each stage—filtering out unavailable endpoints, scoring them based on metrics like "least-loaded" or "affinity," and picking final candidates—the EPP ensures high performance and efficient resource distribution across inference pools.
 
 See [Request Scheduling](scheduling.md) for more details on the design.

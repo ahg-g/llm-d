@@ -1,10 +1,10 @@
 # EPP Request Scheduler
 
-The EPP Request Scheduler is a highly modular and extensible component within the Endpoint Picker (EPP) designed to select the optimal model server (endpoint) for an inference request. It leverages a plugin-based architecture, allowing for sophisticated routing strategies based on real-time metrics, prefix cache tracking, and model-specific requirements like LoRA adapters.
+The EPP Request Scheduler is a highly modular and extensible component within the Endpoint Picker (EPP) designed to select the optimal model server (endpoint) for an inference request. It leverages a plugin-based architecture, allowing for sophisticated endpoint picking strategies based on real-time metrics, prefix cache tracking, and model-specific requirements like LoRA adapters.
 
 ## Architecture Overview
 
-At its core, the scheduler follows a **Filter -> Score -> Pick** lifecycle for every request. It orchestrates multiple **SchedulingProfiles**, each defining a specific set of plugins for filtering and scoring candidate endpoints.
+At its core, the scheduler follows a **Filter -> Score -> Pick** lifecycle for every request. It orchestrates multiple **SchedulerProfiles**, each defining a specific set of plugins for filtering and scoring candidate endpoints.
 
 ```mermaid
 flowchart TD
@@ -51,7 +51,7 @@ flowchart TD
 
 The scheduler's logic is distributed across several extension points, implemented via plugin interfaces:
 
-1.  **ProfilePicker**: (Implemented by `ProfileHandler`) Selects which `SchedulingProfile`s to run based on the request and previous cycle results.
+1.  **ProfilePicker**: (Implemented by `ProfileHandler`) Selects which `SchedulerProfile`s to run based on the request and previous cycle results.
 2.  **Filter**: Narrows down the list of candidate endpoints (e.g., based on health, SLO headroom, or cache affinity).
 3.  **Scorer**: Assigns a score between `0.0` and `1.0` to each filtered endpoint. Multiple scorers can be weighted and combined.
 4.  **Picker**: Selects the final endpoint(s) from the scored list (e.g., highest score, weighted random).
@@ -113,7 +113,7 @@ When a profile runs, it first filters the candidate endpoints. If any remain, it
 
 The scheduler natively supports advanced scheduling paradigms, such as **Prefill/Decode Disaggregation (P/D Disagg)**. This is a serving technique where the initial prompt processing (prefill) and the subsequent token generation (decode) are handled by separate, specialized model servers.
 
-In a P/D Disagg setup, the `ProfileHandler` orchestrates two separate `SchedulingProfiles`:
+In a P/D Disagg setup, the `ProfileHandler` orchestrates two separate `SchedulerProfiles`:
 1.  **Prefill Profile**: Evaluates and scores endpoints specialized for compute-heavy prompt processing. It may use filters and scorers focused on prefix cache affinity, queue depth, or token load.
 2.  **Decode Profile**: Evaluates and scores endpoints specialized for memory-bandwidth-bound token generation.
 

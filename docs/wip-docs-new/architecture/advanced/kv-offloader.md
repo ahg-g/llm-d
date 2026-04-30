@@ -36,7 +36,7 @@ The native path lives entirely inside the vLLM stack. The `OffloadingConnector` 
 ├─────────────────────────────────────────────────────────────────┤
 │                    Offloading Connector                         │
 │        ┌───────────┐   ┌───────────┐   ┌───────────┐            │
-│        │  Router   │   │  Worker   │   │  Metrics  │            │
+│        │ Scheduler │   │  Worker   │   │  Metrics  │            │
 │        └───────────┘   └───────────┘   └───────────┘            │
 ├─────────────────────────────────────────────────────────────────┤
 │                       Offloading API                            │
