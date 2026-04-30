@@ -5,10 +5,6 @@
 ## predicted-latency-slo.values.yaml instead.
 
 inferenceExtension:
-  image:
-    registry: ghcr.io
-    repository: llm-d/llm-d-inference-scheduler
-    tag: v0.8.0
   latencyPredictor:
     enabled: true
   extraServicePorts:

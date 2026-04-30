@@ -4,8 +4,12 @@
 inferenceExtension:
   replicas: 1
   image:
+    # Image override for helm chart version 1.4 below
     hub: ghcr.io/llm-d
     name: llm-d-inference-scheduler
-    tag: v0.7.0
+    # Image override for helm chart version 1.5 and above
+    registry: ghcr.io
+    repository: llm-d/llm-d-inference-scheduler
+    tag: v0.8.0
   flags:
     v: 2

@@ -8,10 +8,6 @@
 ## For routing-only (no SLO headers), use predicted-latency.values.yaml.
 
 inferenceExtension:
-  image:
-    registry: ghcr.io
-    repository: llm-d/llm-d-inference-scheduler
-    tag: v0.8.0
   latencyPredictor:
     enabled: true
   extraServicePorts:
