@@ -86,7 +86,7 @@ flowchart TD
     classDef logic fill:#fff8e1,stroke:#ffb300,stroke-width:2px,color:#ff6f00,font-weight:bold
     classDef gate fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#e65100,font-weight:bold,stroke-dasharray: 5 5
     classDef endpoint fill:#e8f5e9,stroke:#43a047,stroke-width:2px,color:#1b5e20
-    classDef router fill:#e0f7fa,stroke:#00acc1,stroke-width:2px,color:#006064,font-weight:bold
+    classDef scheduler fill:#e0f7fa,stroke:#00acc1,stroke-width:2px,color:#006064,font-weight:bold
 
     Client(["Incoming HTTP Connections"]):::client --> AdmissionController
 
@@ -137,7 +137,7 @@ flowchart TD
         %% Explicit label syntax forces a clean loopback curve
         Gate -.->|"Pool Saturated<br>(Head-of-Line Block)"| Disp
 
-        Sched["4. Late-Binding Router<br>(High Affinity Routing)"]:::router
+        Sched["4. Late-Binding Scheduler<br>(High Affinity Routing)"]:::scheduler
         Gate == "Capacity Available (Saturation < 100%) <br> (Dispatch)" ==> Sched
     end
 
@@ -256,7 +256,7 @@ To prevent the EPP itself from resource exhaustion when queues grow, Flow Contro
 
 ### The Dispatch Lifecycle
 
-While the Router operates on a per-request synchronous lifecycle, the Flow Control layer maintains an asynchronous, continuous **Ingress & Buffer → Policy Evaluation → Gated Dispatch** loop:
+While the Request Scheduler operates on a per-request synchronous lifecycle, the Flow Control layer maintains an asynchronous, continuous **Ingress & Buffer → Policy Evaluation → Gated Dispatch** loop:
 
 ```mermaid
 sequenceDiagram
@@ -266,7 +266,7 @@ sequenceDiagram
     participant EPP_Adm as EPP (Admission)
     participant EPP_Q as EPP (Flow Control Queue)
     participant EPP_BW as EPP (Flow Control Worker)
-    participant EPP_Router as EPP (Router)
+    participant EPP_Scheduler as EPP (Scheduler)
     participant Endpoint as Model Server
 
     Client->>Proxy: HTTP Request
@@ -294,9 +294,9 @@ sequenceDiagram
 1. **Ingress & Buffer**: Incoming requests are classified by `FlowKey` (Priority + Fairness ID) and placed into the appropriate queue. Requests are subject to a configurable TTL (Time-To-Live); if a request remains in the queue past its TTL, it is expired and rejected, preventing the system from processing stale work.
 2. **Policy Evaluation**: Flow Control workers continuously evaluate the queues. They select the highest-priority band with work, apply the **Fairness Policy** to pick a flow, and use the **Ordering Policy** to select the candidate request.
 3. **Gated Dispatch**: Before releasing the request, the **Saturation Detector** is queried. If the pool has capacity, the request is dispatched to the Router. If saturated, the dispatch cycle halts (Head-of-Line blocking), holding the request safely until capacity frees up.
-...
-    Dispatched --> [*]: Sent to Router
 
+
+### System Capabilities & Limits
 
 Understanding the guaranteed capabilities and inherent boundaries of the Flow Control layer is essential for effective capacity planning.
 
@@ -332,7 +332,7 @@ stateDiagram-v2
     Queued --> Cancelled: Client Disconnect<br/>(HTTP 503)
     Queued --> Dispatched: Saturation < 1.0<br/>(Open Gate)
 
-    Dispatched --> [*]: Sent to Router
+    Dispatched --> [*]: Sent to Scheduler
     Dropped --> [*]
     Expired --> [*]
     Cancelled --> [*]

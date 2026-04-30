@@ -57,7 +57,7 @@ Both target model server pods labeled `llm-d.ai/guide=optimized-baseline` since 
 
 #### Standalone Mode
 
-This deploys the llm-d router with an Envoy sidecar, it doesn't set up a Kubernetes Gateway.
+This deploys the llm-d Router with an Envoy sidecar, it doesn't set up a Kubernetes Gateway.
 
 ```bash
 helm install ${GUIDE_NAME} \
@@ -74,7 +74,7 @@ For SLO-aware scheduling, swap the values file: `-f guides/${GUIDE_NAME}/schedul
 To use a Kubernetes Gateway managed proxy rather than the standalone version, follow these steps instead of applying the previous Helm chart:
 
 1. *Deploy a Kubernetes Gateway* by following one of [the gateway guides](../prereq/gateways).
-2. *Deploy the llm-d router and an HTTPRoute* that connects it to the Gateway as follows:
+2. *Deploy the llm-d Router and an HTTPRoute* that connects it to the Gateway as follows:
 
 ```bash
 export PROVIDER_NAME=gke # options: none, gke, agentgateway, istio

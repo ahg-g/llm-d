@@ -4,7 +4,7 @@
 
 ## Overview
 
-This guide deploys the recommended out of the box [routing configuration](https://github.com/llm-d/llm-d-inference-scheduler/blob/main/docs/architecture.md) for most vLLM and SGLang deployments, reducing tail latency and increasing throughput through load-aware and prefix-cache aware balancing.
+This guide deploys the recommended out of the box [configuration](https://github.com/llm-d/llm-d-inference-scheduler/blob/main/docs/architecture.md) for most vLLM and SGLang deployments, reducing tail latency and increasing throughput through load-aware and prefix-cache aware balancing.
 
 The optimized-baseline defaults to two main routing criteria:
 
@@ -74,7 +74,7 @@ This guide includes configurations for the following accelerators:
 
 #### Standalone Mode
 
-This deploys the llm-d router with an Envoy sidecar, it doesn't set up a Kubernetes Gateway.
+This deploys the llm-d Router in [Standalone Mode](placeholder-link):
 
 ```bash
 helm install ${GUIDE_NAME} \

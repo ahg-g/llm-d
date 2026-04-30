@@ -82,7 +82,7 @@ We will leverage elements of Kubernetes automation (OWNERS files, GitHub sync, /
 
 ### CI/CD
 
-CI/CD biases towards GHA.  For more involved e2e testing and benchmarking we will explore alignment with the Kube ecosystem, since we will need that for testing e2e scenarios llm-d adds to the llm-d Router components.
+CI/CD biases towards GHA.  For more involved e2e testing and benchmarking we will explore alignment with the Kube ecosystem, since we will need that for testing e2e scenarios llm-d adds to the inference gateway components.
 
 ### Test Infrastructure Sponsorship
 

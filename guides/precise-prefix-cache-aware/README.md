@@ -74,7 +74,7 @@ kubectl -n ${NAMESPACE} create secret generic llm-d-hf-token --from-literal=HF_T
 
 #### Standalone Mode
 
-This deploys the llm-d router with an Envoy sidecar — no Kubernetes Gateway required.
+This deploys the llm-d Router in the simple [Standalone Mode](placeholder-link):
 
 ```bash
 helm plugin install guides/precise-prefix-cache-aware/scheduler/patches/uds-tokenizer   # once

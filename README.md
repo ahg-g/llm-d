@@ -42,7 +42,7 @@ We recommend new users start with a deployment of [optimized baseline](./guides/
 
 
 <!-- Previous News  -->
-<!-- - [2025-08] Read more about the [llm-d Router](https://llm-d.ai/blog/intelligent-optimized-baseline-with-llm-d), including a deep dive on how different balancing techniques are composed to improve throughput without overloading replicas. -->
+<!-- - [2025-08] Read more about the [optimized-baseline](https://llm-d.ai/blog/intelligent-optimized-baseline-with-llm-d), including a deep dive on how different balancing techniques are composed to improve throughput without overloading replicas. -->
 
 ## 🧱 Architecture
 
