@@ -2,7 +2,7 @@
 
 ## Functionality
 
-The EPP Request Handling component manages the lifecycle of an inference request before and after the scheduling phase. It handles parsing the request payload, preparing and managing state for the [Scheduler](scheduling.md), interacting with [Flow Control](flow-control.md) and processing the response from the model server.
+The EPP Request Handling component manages the lifecycle of an inference request before and after the routing phase. It handles parsing the request payload, preparing and managing state for the [Router](scheduling.md), interacting with [Flow Control](flow-control.md) and processing the response from the model server.
 
 ## Design
 
@@ -31,7 +31,7 @@ flowchart TD
         Admit[Admitter]:::highlight
     end
 
-    Sched[Scheduler]:::accent
+    Router[Router]:::accent
 
     %% Connections
     Req --> Parse
@@ -39,17 +39,17 @@ flowchart TD
     FC --> Prep
     FC -->|"Rejected"| Reject
     Prep --> Admit
-    Admit -->|"Admit"| Sched
+    Admit -->|"Admit"| Router
     Admit -->|"Deny"| Reject
-    Sched --> Endpoint[Selected Endpoint]
+    Router --> Endpoint[Selected Endpoint]
     Endpoint --> Client
 ```
 
 #### Core Components
 
-*   **Parser**: Responsible for parsing the incoming request to a structured internal representation consumable by the scheduler, and parsing the response to extract usage data if reported by the model server.
+*   **Parser**: Responsible for parsing the incoming request to a structured internal representation consumable by the router, and parsing the response to extract usage data if reported by the model server.
 *   **DataProducer**: A pluggable extension that allows customizing request pre-processing and producing per-request state needed for scheduling, such as tokenization, prefix-cache matches, predicted processing latency etc.
-*   **Admitter**: Decides whether to admit a request based on criteria like latency SLOs. Runs after dataProducer but before scheduling. Requests failing admission are rejected, while admitted requests proceed to the scheduling phase.
+*   **Admitter**: Decides whether to admit a request based on criteria like latency SLOs. Runs after dataProducer but before routing. Requests failing admission are rejected, while admitted requests proceed to the routing phase.
 
 #### Advanced Hooks
 

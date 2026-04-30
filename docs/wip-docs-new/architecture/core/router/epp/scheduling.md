@@ -1,20 +1,20 @@
-# EPP Scheduler
+# EPP Router
 
-The EPP Scheduler is a highly modular and extensible component within the Endpoint Picker (EPP) designed to select the optimal model server (endpoint) for an inference request. It leverages a plugin-based architecture, allowing for sophisticated scheduling strategies based on real-time metrics, prefix cache tracking, and model-specific requirements like LoRA adapters.
+The EPP Router is a highly modular and extensible component within the Endpoint Picker (EPP) designed to select the optimal model server (endpoint) for an inference request. It leverages a plugin-based architecture, allowing for sophisticated routing strategies based on real-time metrics, prefix cache tracking, and model-specific requirements like LoRA adapters.
 
 ## Architecture Overview
 
-At its core, the scheduler follows a **Filter -> Score -> Pick** lifecycle for every request. It orchestrates multiple **SchedulerProfiles**, each defining a specific set of plugins for filtering and scoring candidate endpoints.
+At its core, the router follows a **Filter -> Score -> Pick** lifecycle for every request. It orchestrates multiple **RoutingProfiles**, each defining a specific set of plugins for filtering and scoring candidate endpoints.
 
 ```mermaid
 flowchart TD
-    Req[Inference Request] --> S[Scheduler.Schedule]
-    
-    subgraph Cycle [Scheduling Cycle]
+    Req[Inference Request] --> S[Router.Route]
+
+    subgraph Cycle [Routing Cycle]
         direction TD
         S --> Pick[ProfileHandler.Pick]
         Pick -->|Profiles| Loop{For each Profile}
-        
+
         subgraph Exec [Profile Execution]
             direction TD
             Loop --> Filters[Filters]
@@ -22,13 +22,13 @@ flowchart TD
             Scorers --> Picker[Picker]
             Picker --> Result[ProfileResult]
         end
-        
+
         Result -->|Collect| Pick
         Pick -->|Done| PRs[ProfileHandler.ProcessResults]
     end
-    
-    PRs --> Target["Selected Endpoint(s)"]
 
+    PRs --> Target["Selected Endpoint(s)"]
+```
     %% Styling
     style Req fill:#e1f5fe,stroke:#01579b,color:#000
     style S fill:#e8f5e9,stroke:#2e7d32,color:#000
@@ -44,23 +44,23 @@ flowchart TD
 
 ### Core Components
 
-*   **Scheduler**: The main orchestrator that manages the scheduling cycle. It invokes the configured `ProfileHandler` to pick profiles and then runs the selected profiles to obtain target endpoints.
+*   **Router**: The main orchestrator that manages the routing cycle. It invokes the configured `ProfileHandler` to pick profiles and then runs the selected profiles to obtain target endpoints.
 *   **InferenceRequest**: A structured internal representation of the incoming request produced by the [`Parser`](request-handling.md), including the target model, parsed body (Completions, ChatCompletions, etc.), headers, and objectives.
 *   **Endpoint**: Represents a candidate serving engine, with its metadata (e.g., Pod name, namespace and port) and state (e.g., active models, queue depth and KV-cache). Note that a Pod may run one or more endpoints each on a different port, this is the case in [the data parallel deployment mode](https://docs.vllm.ai/en/latest/serving/data_parallel_deployment/).
 
 ### Extension Points
 
-The scheduler's logic is distributed across several extension points, implemented via plugin interfaces:
+The router's logic is distributed across several extension points, implemented via plugin interfaces:
 
-1.  **ProfilePicker**: (Implemented by `ProfileHandler`) Selects which `SchedulerProfile`s to run based on the request and previous cycle results.
+1.  **ProfilePicker**: (Implemented by `ProfileHandler`) Selects which `RoutingProfile`s to run based on the request and previous cycle results.
 2.  **Filter**: Narrows down the list of candidate endpoints (e.g., based on health, SLO headroom, or cache affinity).
 3.  **Scorer**: Assigns a score between `0.0` and `1.0` to each filtered endpoint. Multiple scorers can be weighted and combined.
 4.  **Picker**: Selects the final endpoint(s) from the scored list (e.g., highest score, weighted random).
-5.  **ProcessResults**: (Implemented by `ProfileHandler`) Aggregates the results from all executed profiles to produce the final `SchedulingResult`.
+5.  **ProcessResults**: (Implemented by `ProfileHandler`) Aggregates the results from all executed profiles to produce the final `RoutingResult`.
 
-### Scheduler Profile
+### Routing Profile
 
-A `SchedulerProfile` is a configured pipeline consisting of:
+A `RoutingProfile` is a configured pipeline consisting of:
 *   **Filters**: A list of `Filter` plugins run sequentially.
 *   **Scorers**: A list of `WeightedScorer` objects, where each contains a `Scorer` plugin and its relative weight.
 *   **Picker**: A single `Picker` plugin that makes the final selection.
@@ -112,19 +112,19 @@ When a profile runs, it first filters the candidate endpoints. If any remain, it
 
 ## Advanced Use Cases: Prefill/Decode Disaggregation
 
-The scheduler natively supports advanced routing paradigms, such as **Prefill/Decode Disaggregation (P/D Disagg)**. This is a serving technique where the initial prompt processing (prefill) and the subsequent token generation (decode) are handled by separate, specialized model servers.
+The router natively supports advanced routing paradigms, such as **Prefill/Decode Disaggregation (P/D Disagg)**. This is a serving technique where the initial prompt processing (prefill) and the subsequent token generation (decode) are handled by separate, specialized model servers.
 
-In a P/D Disagg setup, the `ProfileHandler` orchestrates two separate `SchedulerProfiles`:
+In a P/D Disagg setup, the `ProfileHandler` orchestrates two separate `RoutingProfiles`:
 1.  **Prefill Profile**: Evaluates and scores endpoints specialized for compute-heavy prompt processing. It may use filters and scorers focused on prefix cache affinity, queue depth, or token load.
 2.  **Decode Profile**: Evaluates and scores endpoints specialized for memory-bandwidth-bound token generation.
 
 
 ```mermaid
 flowchart TD
-    Req[Inference Request] --> S[Scheduler]
+    Req[Inference Request] --> S[Router]
     S --> PH[ProfileHandler]
     
-    subgraph Profiles [Scheduling Profiles]
+    subgraph Profiles [Routing Profiles]
         direction TB
         P1[Prefill Profile]
         P2[Decode Profile]
@@ -143,11 +143,11 @@ See [Disaggregated Serving](../../advanced/disaggregation/README.md) for more de
 
 ## Metrics & Observability
 
-The EPP Scheduler exposes detailed metrics to track pool health and scheduling decisions.
+The EPP Router exposes detailed metrics to track pool health and routing decisions.
 
-### Pool & Scheduling Metrics
+### Pool & Routing Metrics
 
-The following metrics provide visibility into the InferencePool health and scheduling decisions.
+The following metrics provide visibility into the InferencePool health and routing decisions.
 
 #### Pool Health Metrics
 
@@ -159,12 +159,12 @@ The following metrics provide visibility into the InferencePool health and sched
 | `inference_pool_per_pod_queue_size` | Gauge | `model_server_pod`, `name` | Queue size for each individual pod |
 | `inference_pool_average_running_requests` | Gauge | `name` | Average number of running requests across the pool |
 
-#### Scheduler Performance Metrics
+#### Router Performance Metrics
 
 | Metric | Type | Labels | Description |
 |--------|------|--------|-------------|
-| `inference_extension_scheduler_attempts_total` | Counter | `status`, `target_model_name`, `pod_name`, `namespace`, `port` | Number of scheduling attempts and their outcomes |
-| `inference_extension_scheduler_e2e_duration_seconds` | Distribution | *None* | End-to-end scheduling latency |
+| `inference_extension_scheduler_attempts_total` | Counter | `status`, `target_model_name`, `pod_name`, `namespace`, `port` | Number of routing attempts and their outcomes |
+| `inference_extension_scheduler_e2e_duration_seconds` | Distribution | *None* | End-to-end routing latency |
 | `inference_extension_plugin_duration_seconds` | Distribution | `extension_point`, `plugin_type`, `plugin_name` | Processing latency for each plugin |
 
 #### Prefix Cache Metrics

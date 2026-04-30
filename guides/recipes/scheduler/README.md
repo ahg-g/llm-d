@@ -1,11 +1,11 @@
 # Scheduler Recipes
 
-llm-d uses the [Inference Scheduler](https://github.com/llm-d/llm-d-inference-scheduler) to make intelligent request scheduling decisions for inference requests. There are two deployment modes:
+llm-d uses the **llm-d Router** (also referred to as the EPP) to make intelligent request routing decisions for inference requests. There are two deployment modes:
 
 
 ## Standalone (Default)
 
-Use this when you **do not** want to deploy a proxy via Kubernetes Gateway APIs. The standalone chart deploys the scheduler as an Endpoint Picker Pod (EPP) with an Envoy sidecar to proxy the traffic directly.
+Use this when you **do not** want to deploy a proxy via Kubernetes Gateway APIs. The standalone chart deploys the **llm-d router** (as an Endpoint Picker Pod) with an Envoy sidecar to proxy the traffic directly.
 
 **Chart:** `oci://registry.k8s.io/gateway-api-inference-extension/charts/standalone`
 
@@ -28,7 +28,7 @@ Use this when you want to route traffic through a proxy managed by the Kubernete
 2. Creating a Gateway resource (see [recipes/gateway](../gateway/))
 3. Deploying the inferencepool chart (below)
 
-The inferencepool chart deploys the scheduler as an Endpoint Picker Pod (EPP). The proxy communicates with the EPP via gRPC ext-proc to determine request scheduling.
+The `inferencepool` chart deploys the **llm-d router** (as an Endpoint Picker Pod). The proxy communicates with the EPP via gRPC `ext-proc` to determine request routing.
 
 **Chart:** `oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool`
 

@@ -78,7 +78,7 @@ Each replica's capacity is modeled with two bounds:
 
 The **effective capacity** per replica is the minimum of k1 and k2. Per-variant capacity is aggregated using the median across ready replicas.
 
-**Demand** per replica is the sum of tokens currently in use and the queued requests multiplied by the average input token length. The scheduler queue demand (from `inference_extension_flow_control_queue_size` and `inference_extension_flow_control_queue_bytes`metrics) is added to the InferencePool-level totals.
+**Demand** per replica is the sum of tokens currently in use and the queued requests multiplied by the average input token length. The router queue demand (from `inference_extension_flow_control_queue_size` and `inference_extension_flow_control_queue_bytes`metrics) is added to the InferencePool-level totals.
 
 Scaling signals:
 - **Required capacity**: total demand divided by the scale-up threshold, minus anticipated supply. A positive value means scale-up is needed.
@@ -91,7 +91,7 @@ Key improvements over `saturation-percentage-based`:
 - Dual-bound capacity model (memory + compute) captures both resource bottlenecks
 - Capacity knowledge is cached for zero-replica variants, enabling accurate cost estimation before scaling
 - Supports P/D (Prefill/Decode) disaggregation with per-role capacity attribution
-- Considers upstream scheduler queue demand (requests queued before reaching any vLLM pod)
+- Considers upstream router queue demand (requests queued before reaching any vLLM pod)
 - Output-length workload bucketing for compute-bound history (short < 100, medium < 500, long >= 500 tokens)
 
 ### SLO Analyzer (Queueing Model) -- Experimental
@@ -170,13 +170,13 @@ Each metrics source provides three main capabilities:
 | `avg_output_tokens` | `rate(vllm:request_generation_tokens_sum[5m]) / rate(..._count[5m])` | Average output token count |
 | `avg_input_tokens` | `rate(vllm:request_prompt_tokens_sum[5m]) / rate(..._count[5m])` | Average input token count |
 | `prefix_cache_hit_rate` | `rate(vllm:prefix_cache_hits[5m]) / rate(vllm:prefix_cache_queries[5m])` | Prefix cache hit ratio |
-| `scheduler_queue_size` | `sum(inference_extension_flow_control_queue_size{...})` | Upstream scheduler queue depth |
-| `scheduler_queue_bytes` | `sum(inference_extension_flow_control_queue_bytes{...})` | Upstream scheduler queue bytes |
+| `router_queue_size` | `sum(inference_extension_flow_control_queue_size{...})` | Upstream router queue depth |
+| `router_queue_bytes` | `sum(inference_extension_flow_control_queue_bytes{...})` | Upstream router queue bytes |
 
 **Queueing model queries** (per-pod, 1-minute windows):
 | Query Name | PromQL | Purpose |
 |---|---|---|
-| `scheduler_dispatch_rate` | `sum by (pod_name) (rate(inference_extension_scheduler_attempts_total{status="success",...}[1m]))` | Per-pod arrival rate |
+| `router_dispatch_rate` | `sum by (pod_name) (rate(inference_extension_scheduler_attempts_total{status="success",...}[1m]))` | Per-pod arrival rate |
 | `avg_ttft` | `rate(vllm:time_to_first_token_seconds_sum[1m]) / rate(..._count[1m])` | Average time to first token |
 | `avg_itl` | `rate(vllm:time_per_output_token_seconds_sum[1m]) / rate(..._count[1m])` | Average inter-token latency |
 
@@ -188,7 +188,7 @@ Each metrics source provides three main capabilities:
 **Scale-from-zero** uses EPP (Endpoint Picker) metrics directly (not via Prometheus):
 | Metric | Purpose |
 |---|---|
-| `inference_extension_flow_control_queue_size` | Pending requests in the scheduler flow control queue |
+| `inference_extension_flow_control_queue_size` | Pending requests in the router flow control queue |
 
 The replica metrics collector orchestrates query execution and populates per-pod metric data for consumption by the analyzers.
 
