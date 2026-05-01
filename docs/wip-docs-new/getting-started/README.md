@@ -48,6 +48,23 @@ Split inference into dedicated **prefill workers** (prompt processing) and **dec
 
 An **llm-d Router** capability implemented primarily as an EPP plugin that routes each request to the replica predicted to serve it fastest, using an XGBoost model trained online on live traffic to predict ITL and TTFT. Optionally enforce per-request SLOs via `x-slo-ttft-ms` / `x-slo-tpot-ms` headers — requests that no replica can meet within budget are shed at admission rather than routed to a guaranteed miss. Useful when workload variance makes queue-depth a poor proxy for true load, or when clients need to express interactive vs. batch latency budgets.
 
+### Batch Inference
+
+Manage high-volume offline inference workloads through OpenAI-compatible Batch APIs. llm-d provides two primary components for batch processing:
+- **llm-d Batch Gateway** — Provides `/v1/batches` and `/v1/files` endpoints for job submission and tracking.
+- **llm-d Async Processor** — A dispatch agent that pulls requests from message queues (such as Redis and Google Pub/Sub) and feeds them to the llm-d Router with system-aware flow control to prevent impacting interactive traffic.
+
+### Flow Control
+
+The **llm-d Router** implements sophisticated flow control to protect the inference pool from saturation and ensure fair resource sharing across tenants. By shifting queuing from isolated model server queues to a centralized, policy-aware buffer in the EPP, llm-d provides:
+
+- **Multi-Tenant Fairness** — Prevents "noisy neighbors" from monopolizing GPU capacity by enforcing fairness policies (e.g., Round-Robin) across different tenant IDs.
+- **Strict Priority Dispatch** — Ensures that high-priority interactive requests are always serviced before lower-priority background tasks, even during periods of heavy load.
+- **Late-Binding Scheduling** — Delays routing decisions until the moment capacity becomes available, ensuring requests are matched to the best possible replica (e.g., one with the highest prefix-cache affinity).
+- **Proactive SLO Guardrails** — Optionally rejects or sheds traffic that cannot meet latency targets, protecting the Quality of Service (QoS) for admitted requests.
+
+This centralized queuing model also provides a definitive "True Demand" metric, enabling more proactive and accurate autoscaling than traditional GPU utilization metrics alone.
+
 ### Wide Expert-Parallelism
 
 Deploy large Mixture-of-Experts models like DeepSeek-R1 across multiple nodes using combined Data Parallelism and Expert Parallelism deployments. This deployment pattern maximizes KV cache space for large models, enabling long-context online serving and high-throughput generation for batch and RL use cases.
