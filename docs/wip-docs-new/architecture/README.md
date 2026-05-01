@@ -37,10 +37,11 @@ In disaggregated serving, a single inference request is split into multiple phas
 
 See [Disaggregation](advanced/disaggregation/README.md) for complete details.
 
-### Router "Consultants"
+### Predicted Latency-Based Routing
 
-The EPP can be extended with 'consultant' sidecars that provide additional signals for routing decisions:
-- [Latency Predictor](advanced/latency-predictor.md): Trains an XGBoost model online to predict request latency for better endpoint scoring.
+The llm-d Router can be extended with "consultant" sidecars that provide advanced signals for routing decisions. The primary implementation is the **Latency Predictor**, which enables routing based on predicted ITL and TTFT.
+
+- [Latency Predictor](advanced/latency-predictor.md): Trains an XGBoost model online to predict request latency for better endpoint scoring and SLO enforcement.
 
 ### Batch Inference
 
