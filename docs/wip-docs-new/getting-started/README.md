@@ -52,6 +52,13 @@ An **llm-d Router** capability implemented primarily as an EPP plugin that route
 
 Deploy large Mixture-of-Experts models like DeepSeek-R1 across multiple nodes using combined Data Parallelism and Expert Parallelism deployments. This deployment pattern maximizes KV cache space for large models, enabling long-context online serving and high-throughput generation for batch and RL use cases.
 
+### Workload APIs for Multi-Node Serving
+
+The project drives the evolution of multi-node and disaggregated workload orchestration via Kubernetes-native APIs that simplify the management of complex, multi-container inference workloads:
+
+- **LeaderWorkerSet (LWS)** — Optimized for multi-node distributed inference (e.g., Wide Expert Parallelism). It manages a group of pods as a single logical unit, where a "leader" pod coordinates one or more "worker" pods, providing common network identity and lifecycle management for collective operations.
+- **DisaggregatedSet** — Specifically designed for disaggregated serving architectures. It manages the lifecycle and scaling of heterogeneous component sets (like Prefill and Decode server pods) that must work together, ensuring that related resources are provisioned and connected efficiently.
+
 ### Workload Autoscaling
 
 Two complementary autoscaling patterns:
