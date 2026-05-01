@@ -30,14 +30,15 @@ The EPP component uses a pluggable scoring pipeline to route each request to the
 
 This alone can deliver order-of-magnitude latency reductions vs. round-robin baselines.
 
-### Tiered KV Prefix Caching
+### KV Cache Management
 
-Extend prefix cache capacity beyond accelerator HBM by offloading KV-cache entries through a configurable storage hierarchy:
+A comprehensive ecosystem for managing and reusing the KV cache across the inference pool. This includes:
 
-- **Accelerator HBM** — fastest, limited capacity
-- **CPU memory** — fast transfer, larger capacity
-- **Local SSD** — cost-effective, higher latency
-- **Remote filesystem** — durable, shareable across replicas (in progress)
+- **Prefix-Cache Aware Routing** — The **llm-d Router** (via the EPP) routes requests to replicas that already contain relevant KV-cache entries, eliminating redundant prefill computation and reducing latency.
+- **KV-Cache Indexing** — Maintains a real-time, globally consistent view of exactly which token blocks reside on which model server replicas using high-frequency event tracking.
+- **KV Offloading** — Extends cache capacity beyond accelerator HBM by offloading KV-cache entries through a storage hierarchy (CPU memory, local SSD).
+
+By composing these layers, llm-d allows an inference pool to scale its effective cache capacity far beyond physical hardware limits.
 
 ### Prefill/Decode Disaggregation
 
