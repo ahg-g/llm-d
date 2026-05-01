@@ -35,14 +35,14 @@ In disaggregated serving, a single inference request is split into multiple phas
 
 See [Disaggregation](advanced/disaggregation/README.md) for complete details.
 
-### KV Management
+### KV Cache Management
 
 llm-d provides a comprehensive ecosystem for managing and reusing the KV cache across the inference pool. This includes:
 - [Prefix-Cache Aware Routing](advanced/kv-management/prefix-cache-aware-routing.md): Heuristic and precise techniques to maximize cache hits.
 - [KV-Cache Indexing](advanced/kv-management/kv-indexer.md): Event-driven tracking of cache state across all model servers.
 - [KV Offloading](advanced/kv-management/kv-offloader.md): Tiered storage hierarchy (CPU, SSD) for extending cache capacity.
 
-See [KV Management](advanced/kv-management/README.md) for an overview of how these components compose.
+See [KV Cache Management](advanced/kv-management/README.md) for an overview of how these components compose.
 
 ### Router "Consultants"
 

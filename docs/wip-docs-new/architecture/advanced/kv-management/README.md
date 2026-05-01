@@ -1,11 +1,11 @@
-# KV Management
+# KV Cache Management
 
-Key-Value (KV) management is the foundation of high-performance LLM serving in llm-d. By efficiently tracking, preserving, and reusing the KV cache—the intermediate state generated during LLM inference—llm-d significantly reduces latency and increases the overall throughput of the inference pool.
+Key-Value (KV) cache management is the foundation of high-performance LLM serving in llm-d. By efficiently tracking, preserving, and reusing the KV cache—the intermediate state generated during LLM inference—llm-d significantly reduces latency and increases the overall throughput of the inference pool.
 
-The KV management ecosystem in llm-d consists of three core architectural pillars:
+The KV cache management ecosystem in llm-d consists of three core architectural pillars:
 
 ## 1. Prefix-Cache Aware Routing
-The "intelligence" layer that determines the optimal model server Pod for each incoming request. It aims to maximize "cache hits" by routing requests to replicas that already contain the relevant KV cache for the request's prompt prefix.
+The "intelligence" layer managed by the **llm-d Router** (via its **EPP** component) that determines the optimal model server Pod for each incoming request. It aims to maximize "cache hits" by routing requests to replicas that already contain the relevant KV cache for the request's prompt prefix.
 
 - **[Deep Dive: Prefix-Cache Aware Routing](prefix-cache-aware-routing.md)**: Comparison of the Approximate (heuristic-based) and Precise (event-driven) routing implementations.
 

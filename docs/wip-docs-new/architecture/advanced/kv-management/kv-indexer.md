@@ -1,6 +1,6 @@
 # KV-Cache Indexer
 
-The **KV-Cache Indexer** enables llm-d's precise prefix-cache-aware scheduling functionality.
+The **KV-Cache Indexer** is a component of the **llm-d Router** (residing within the **EPP**) that enables precise prefix-cache-aware routing functionality.
 
 > [!NOTE]
 > This page assumes familiarity with the EPP's design. See [EPP architecture](../core/epp) for more details.

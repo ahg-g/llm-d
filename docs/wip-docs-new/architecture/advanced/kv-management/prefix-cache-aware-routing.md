@@ -1,6 +1,6 @@
 # Prefix-Cache Aware Routing
 
-Prefix-cache aware routing is a core technique in llm-d to reduce tail latency and increase throughput. By routing requests to model server replicas that already contain the relevant Key-Value (KV) cache for a prompt's prefix, the system avoids redundant "prefill" computation, saving both time and accelerator (GPU/TPU) resources.
+Prefix-cache aware routing is a core technique managed by the **llm-d Router** (specifically via its **Endpoint Picker (EPP)** component) to reduce tail latency and increase throughput. By routing requests to model server replicas that already contain the relevant Key-Value (KV) cache for a prompt's prefix, the system avoids redundant "prefill" computation, saving both time and accelerator (GPU/TPU) resources. This technique expects the underlying model servers to support KV-caching across requests, such as vLLM's [Automatic Prefix Caching](https://docs.vllm.ai/en/latest/features/automatic_prefix_caching/) feature.
 
 llm-d provides two distinct implementations of this capability, catering to different operational requirements and precision needs.
 
@@ -11,8 +11,8 @@ llm-d provides two distinct implementations of this capability, catering to diff
 The approximate implementation is designed to be lightweight and requires no external dependencies beyond the standard EPP deployment.
 
 ### Components
-- **`approx-prefix-cache-producer`** (DataProducer plugin)
-- **`prefix-cache-scorer`** (Scorer plugin)
+- [**`approx-prefix-cache-producer`**](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/requestcontrol/dataproducer/approximateprefix) (DataProducer plugin)
+- [**`prefix-cache-scorer`**](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/prefix) (Scorer plugin)
 
 ### How it Works
 1.  **Approximation**: Since the EPP does not natively contain a tokenizer, it approximates tokens using character-to-token ratios.
@@ -22,7 +22,7 @@ The approximate implementation is designed to be lightweight and requires no ext
 5.  **Learning**: After a routing decision is made, the EPP updates its local index, assuming the selected Pod will now host that prefix.
 
 ### Pros & Cons
-- **Pros**: Extremely lightweight; no need for a tokenizer sidecar; no network connectivity required to model servers (ZMQ).
+- **Pros**: Extremely lightweight; no need for a tokenizer sidecar; no network connectivity required to model servers (ZMQ); does not require explicit model server integration as it doesn't expect the model servers to communicate KV-cache events.
 - **Cons**: Can diverge from actual model server state (e.g., if a Pod evicts a prefix due to memory pressure); less precise than token-based matching.
 
 ---
@@ -32,8 +32,8 @@ The approximate implementation is designed to be lightweight and requires no ext
 The precise implementation provides 100% accuracy by leveraging actual token data and real-time state updates from the model servers.
 
 ### Components
-- **`tokenizer`** (DataProducer plugin)
-- **`precise-prefix-cache-scorer`** (Scorer plugin)
+- [**`tokenizer`**](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/requestcontrol/dataproducer/tokenizer) (DataProducer plugin)
+- [**`precise-prefix-cache-scorer`**](https://github.com/llm-d/llm-d-inference-scheduler/tree/main/pkg/epp/framework/plugins/scheduling/scorer/preciseprefixcache) (Scorer plugin)
 - **KV-Cache Indexer** (EPP Data Layer component)
 
 ### How it Works
@@ -45,7 +45,7 @@ The precise implementation provides 100% accuracy by leveraging actual token dat
 
 ### Pros & Cons
 - **Pros**: 100% precision; handles complex cache eviction policies; natively supports Prefill/Decode disaggregation (by identifying specific blocks for transfer).
-- **Cons**: Requires additional infrastructure (tokenizer service, ZMQ connectivity); slightly higher resource overhead.
+- **Cons**: Requires additional infrastructure (tokenizer service, ZMQ connectivity); slightly higher resource overhead; requires model server support for emitting KV-cache events.
 
 ---
 
@@ -59,5 +59,5 @@ The precise implementation provides 100% accuracy by leveraging actual token dat
 | **Use Case** | Simple, homogeneous workloads | Complex, high-scale production serving |
 | **P/D Disagg Support** | Basic | Advanced/Native |
 
-### Composition with KV Management
-Both implementations are part of the broader **KV Management** ecosystem in llm-d. While the Approximate implementation is self-contained, the Precise implementation relies on the [KV-Cache Indexer](kv-indexer.md) and can work in tandem with [KV Offloading](kv-offloader.md) to manage cache state across accelerator and host memory boundaries.
+### Composition with KV Cache Management
+Both implementations are part of the broader **KV Cache Management** ecosystem in llm-d. While the Approximate implementation is self-contained, the Precise implementation relies on the [KV-Cache Indexer](kv-indexer.md) and can work in tandem with [KV Offloading](kv-offloader.md) to manage cache state across accelerator and host memory boundaries.
