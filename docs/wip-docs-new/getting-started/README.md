@@ -14,7 +14,7 @@ llm-d is a [CNCF sandbox project](https://www.cncf.io/) that supports multiple i
 
 ### Kubernetes-Native
 
-llm-d integrates with standard Kubernetes primitives — Gateway API, Custom Resources, Labels, and HPA — rather than introducing new orchestration layers or CRDs. If you already run workloads on Kubernetes, llm-d fits naturally into your infrastructure.
+llm-d integrates with standard Kubernetes primitives — Gateway API, Custom Resources, Labels, and HPA. If you already run workloads on Kubernetes, llm-d fits naturally into your infrastructure.
 
 ## Key Capabilities
 
@@ -61,19 +61,16 @@ Two complementary autoscaling patterns:
 
 ## Architecture at a Glance
 
-llm-d uses a layered, composable architecture centered around the **llm-d Router**.
+llm-d uses a layered, composable architecture. See the [Architecture Overview](../architecture/README.md) for a deeper dive into the architecture.
 
 <p align="center">
-  <img src="../../assets/basic-architecture.svg" width="600" alt="Architecture">
+  <picture>
+    <source media="(prefers-color-scheme: dark)">
+    <img alt="llm-d Arch" src="../../assets/images/llm-d-arch.svg" width=95%>
+  </picture>
 </p>
 
-| Component | Role |
-|---|---|
-| **[llm-d Router](../architecture/core/router/README.md)** | The intelligent request gateway. It is composed of a **Proxy** (Envoy) and the **Endpoint Picker (EPP)**. The Router makes model-aware routing decisions, manages flow control, and enforces request-level policies. |
-| **[InferencePool](../architecture/core/inferencepool.md)** | A Kubernetes Custom Resource that groups model server pods and defines how the Router discovers and interacts with them. |
-| **[Model Servers](../architecture/core/model-servers.md)** | vLLM or SGLang instances running models on accelerators. |
 
-See the [Architecture Overview](../architecture/README.md) for a deeper dive into the architecture.
 
 ## Well-Lit Paths
 
