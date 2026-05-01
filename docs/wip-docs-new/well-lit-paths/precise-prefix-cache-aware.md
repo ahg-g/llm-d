@@ -26,4 +26,4 @@ Events flow from model-server pods to the llm-d Router over ZMQ. The default mod
 
 ## Further Reading
 
-See [KV-Cache Indexer](../architecture/advanced/kv-indexer.md) for the full architecture
+See [KV-Cache Indexer](../architecture/advanced/kv-management/kv-indexer.md) for the full architecture

@@ -6,7 +6,7 @@ Quick-reference definitions for terms used throughout the llm-d documentation. F
 
 **Aggregated Serving** — The default serving mode where a single Model Server handles both Prefill and Decode for each request, as opposed to Disaggregated Serving.
 
-**Consultant** — An optional sidecar component that the EPP queries for additional scoring signals beyond built-in metrics. Examples include the [Latency Predictor](../architecture/advanced/latency-predictor.md) and the [KV-Cache Indexer](../architecture/advanced/kv-indexer.md).
+**Consultant** — An optional sidecar component that the EPP queries for additional scoring signals beyond built-in metrics. Examples include the [Latency Predictor](../architecture/advanced/latency-predictor.md) and the [KV-Cache Indexer](../architecture/advanced/kv-management/kv-indexer.md).
 
 **Data Parallelism (DP)** — Running independent model replicas on separate GPUs within the same node, each handling different requests for higher aggregate throughput. See [Model Servers](../architecture/core/model-servers.md).
 
@@ -32,7 +32,7 @@ Quick-reference definitions for terms used throughout the llm-d documentation. F
 
 **KV Cache** — Key-value tensor cache storing intermediate attention states during LLM inference. Reusing cached entries for shared prompt prefixes (Prefix Caching) avoids redundant computation and reduces latency. See [Architecture Overview](../architecture/README.md).
 
-**KV-Cache Indexer** — A Consultant component that maintains a globally consistent view of KV-cache block distribution across Model Servers using KV-Events, enabling precise prefix cache-aware routing. See [KV-Cache Indexer](../architecture/advanced/kv-indexer.md).
+**KV-Cache Indexer** — A Consultant component that maintains a globally consistent view of KV-cache block distribution across Model Servers using KV-Events, enabling precise prefix cache-aware routing. See [KV-Cache Indexer](../architecture/advanced/kv-management/kv-indexer.md).
 
 **KV-Events** — Events emitted by Model Servers (via ZeroMQ) when KV-cache blocks are created or evicted. Consumed by the KV-Cache Indexer for real-time cache state tracking.
 

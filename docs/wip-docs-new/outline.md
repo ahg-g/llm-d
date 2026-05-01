@@ -8,19 +8,25 @@
 ├── architecture
 │   ├── README.md
 │   ├── core
-│   │   ├── proxy.md
+│   │   ├── router
+│   │   │   ├── README.md
+│   │   │   ├── proxy.md
+│   │   │   └── epp
+|   │   │       ├── README.md
+|   │   │       ├── scheduling.md
+|   │   │       ├── flow-control.md
+|   │   │       ├── request-handling.md
+|   │   │       └── configuration.md
 │   │   ├── inferencepool.md
-│   │   ├── epp
-|   │   │   ├── README.md
-|   │   │   ├── scheduling.md
-|   │   │   ├── flow-control.md
-|   │   │   ├── request-handling.md
-|   │   │   └── configuration.md
 │   │   └── model-servers.md
 │   └── advanced
-│       ├── disaggregation.md
-│       ├── kv-indexer.md
-│       ├── kv-offloading.md
+│       ├── disaggregation
+│       │   └── README.md
+│       ├── kv-management
+│       │   ├── README.md
+│       │   ├── prefix-cache-aware-routing.md
+│       │   ├── kv-indexer.md
+│       │   └── kv-offloader.md
 │       ├── latency-predictor.md
 │       └── autoscaling
 │          ├── README.md
@@ -48,5 +54,11 @@
 │   ├── deploying-multiple-models.md
 │   └── rdma-configuration.md
 └── api-reference
-    └── tbd.md
+    ├── README.md
+    ├── inferencepool.md
+    ├── inferenceobjective.md
+    ├── inferencemodelrewrite.md
+    ├── endpointpickerconfig.md
+    ├── http-headers.md
+    └── glossary.md
 ```
