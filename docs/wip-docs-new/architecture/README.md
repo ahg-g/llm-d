@@ -4,36 +4,23 @@ High-level guide to llm-d architecture. Start here, then dive into specific guid
 
 ## Core Components
 
-The llm-d architecture is built around three primary concepts: the Router, the InferencePool, and the Model Server.
+The llm-d architecture is built around three primary concepts: the [Router](core/router/README.md), the [InferencePool](core/inferencepool.md), and the [Model Server](core/model-servers.md).
 
-- **llm-d Router** - The intelligent entry point for inference requests. It provides LLM-aware load balancing, request queuing, and policy enforcement. It is composed of two functional parts:
-    - **Proxy**: A high-performance L7 proxy (typically Envoy) that accepts user requests and consults the EPP via the `ext-proc` protocol to determine the optimal destination.
-    - **Endpoint Picker (EPP)**: The routing engine that scores and selects model server pods based on real-time metrics, KV-cache affinity, and configured policies.
+- **[llm-d Router](core/router/README.md)** - The intelligent entry point for inference requests. It provides LLM-aware load balancing, request queuing, and policy enforcement. It is composed of two functional parts:
+    - **[Proxy](core/router/proxy.md)**: A high-performance L7 proxy (typically Envoy) that accepts user requests and consults the EPP via the `ext-proc` protocol to determine the optimal destination.
+    - **[Endpoint Picker (EPP)](core/router/epp/README.md)**: The routing engine that scores and selects model server pods based on real-time metrics, KV-cache affinity, and configured policies.
 
-- **InferencePool** - The API that defines a group of Model Server Pods sharing the same model and compute configuration. Conceptualized as an "LLM-optimized Service", it serves as the discovery target for the Router.
+- **[InferencePool](core/inferencepool.md)** - The API that defines a group of Model Server Pods sharing the same model and compute configuration. Conceptualized as an "LLM-optimized Service", it serves as the discovery target for the Router.
 
-- **Model Server** - The inference engine (such as vLLM or SGLang) that executes the model on hardware accelerators (GPUs, TPUs, HPUs).
+- **[Model Server](core/model-servers.md)** - The inference engine (such as vLLM or SGLang) that executes the model on hardware accelerators (GPUs, TPUs, HPUs).
 
 <p align="center">
   <img src="../../assets/basic-architecture.svg" width="600" alt="Architecture">
 </p>
 
-For more details on the core components, see:
-- [llm-d Router](core/router/README.md)
-    - [Proxy](core/router/proxy.md)
-    - [EPP](core/router/epp/README.md)
-- [InferencePool](core/inferencepool.md)
-- [Model Server](core/model-servers.md)
-
 ## Advanced Patterns
 
 llm-d's core design can be extended with optional advanced patterns:
-
-### Disaggregated Serving
-
-In disaggregated serving, a single inference request is split into multiple phases (e.g., Prefill and Decode) handled by specialized workers. The llm-d Router orchestrates this flow by selecting both a prefill and a decode endpoint and coordinating the KV-cache transfer between them.
-
-See [Disaggregation](advanced/disaggregation/README.md) for complete details.
 
 ### KV Cache Management
 
@@ -43,6 +30,12 @@ llm-d provides a comprehensive ecosystem for managing and reusing the KV cache a
 - [KV Offloading](advanced/kv-management/kv-offloader.md): Tiered storage hierarchy (CPU, SSD) for extending cache capacity.
 
 See [KV Cache Management](advanced/kv-management/README.md) for an overview of how these components compose.
+
+### Disaggregated Serving
+
+In disaggregated serving, a single inference request is split into multiple phases (e.g., Prefill and Decode) handled by specialized workers. The llm-d Router orchestrates this flow by selecting both a prefill and a decode endpoint and coordinating the KV-cache transfer between them.
+
+See [Disaggregation](advanced/disaggregation/README.md) for complete details.
 
 ### Router "Consultants"
 
