@@ -16,6 +16,10 @@ llm-d is a [CNCF sandbox project](https://www.cncf.io/) that supports multiple i
 
 llm-d integrates with standard Kubernetes primitives — Gateway API, Custom Resources, Labels, and HPA. If you already run workloads on Kubernetes, llm-d fits naturally into your infrastructure.
 
+### Composable and Incremental Adoption
+
+While llm-d offers a comprehensive suite of state-of-the-art optimizations, its architecture is fundamentally composable. You do not need to "buy into" the entire stack to benefit from individual features. Whether you only need intelligent, prefix-aware load balancing for an existing pool of model servers, or you want to layer in disaggregated serving and proactive autoscaling, llm-d allows you to incrementally adopt specific capabilities that solve your immediate production bottlenecks.
+
 ## Key Capabilities
 
 ### llm-d Router (Intelligent Load Balancing)
