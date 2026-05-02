@@ -20,6 +20,7 @@ Well-lit paths are curated, end-to-end guides for common LLM inference patterns 
 ### Operational Excellence
 
 - **[Flow Control](flow-control.md)**: Intelligent request queuing for multi-tenant deployments and managing traffic spikes.
+- **[Workload Autoscaling](workload-autoscaling.md)**: From simple Kubernetes autoscaling supplemented by EPP load metrics to advanced, SLO-aware capacity optimization for heterogeneous pools via the Workload Variant Autoscaler.
 
 ## Experimental
 
