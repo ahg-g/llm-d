@@ -20,7 +20,7 @@ See the [optimized baseline guide](../../guides/optimized-baseline) for manifest
 
 ### Prefix-Aware Scheduling
 
-EPP maintains a view of each endpoints's prefix-cache state in memory. When a request arrives, it identifies which pod already holds the matching prefix in KV-cache and routes the request there. For multi-turn workloads, this optimization is critical to avoid excessive recomputation in a scale-out setting.
+EPP maintains a view of each endpoints' prefix-cache state in memory. When a request arrives, it identifies which pod already holds the matching prefix in KV-cache and routes the request there. For multi-turn workloads, this optimization is critical to avoid excessive recomputation in a scale-out setting.
 
 <p align="center">
   <picture>
@@ -31,7 +31,7 @@ EPP maintains a view of each endpoints's prefix-cache state in memory. When a re
 
 ### Load-Aware Scheduling
 
-EPP continuously probes each endpoints's metrics by scraping `/metrics` at a regular interval (50ms default). It scores endpoints on queue depth, running requests, and KV-cache utilization to schedule requests to the endpoint with the lowest load, avoiding hotspots caused by heterogeneous request patterns.
+EPP continuously probes each endpoints' metrics by scraping `/metrics` at a regular interval (50ms default). It scores endpoints on queue depth, running requests, and KV-cache utilization to schedule requests to the endpoint with the lowest load, avoiding hotspots caused by heterogeneous request patterns.
 
 <p align="center">
   <picture>
