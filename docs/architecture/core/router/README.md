@@ -7,7 +7,7 @@ The **llm-d Router** is the intelligent entry point for inference requests in th
 The llm-d Router is composed of two primary functional parts:
 
 ### Proxy 
-Any conformant industry-grade L7 proxy (typically Envoy). The proxy handles the data plane, including connection management, TLS termination, and request forwarding.
+Any conformant industry-grade L7 proxy (typically Envoy). The proxy handles the data plane, including connection management, TLS termination, and request forwarding. Supported implementations range from self-managed application load balancers (e.g., Istio, AgentGateway) to compliant cloud-managed services, such as Google Cloud's Application Load Balancer.
 
 See the [**Proxy deep dive**](proxy.md) to learn about deployment modes (Standalone vs. Gateway Mode), request flow, and Gateway API integration.
 
@@ -25,5 +25,12 @@ The EPP evaluates the request against the current state of the [InferencePool](.
 
 This decoupled architecture allows llm-d to leverage the performance and reliability of production-grade proxies while providing a highly extensible framework for LLM-specific routing logic.
 
+## Terminology
 
+To ensure clarity across the project, we use the following standard terminology:
+
+- **llm-d Router**: The complete intelligent entry point, comprising both the **Proxy** (e.g., Envoy) and the **Endpoint Picker (EPP)**. This term replaces "Inference Scheduler" in all contexts.
+- **Inference Gateway**: A synonym for the **llm-d Router** when operating in **Gateway Mode**.
+- **Endpoint Picker (EPP)**: The specific component that implements the routing intelligence and scoring logic. Use this term when referring to capabilities or configurations specific to the EPP itself, rather than the request routing system as a whole.
+- **Request Scheduler**: A sub-component within the EPP responsible for the queuing and dispatching of requests.
 
