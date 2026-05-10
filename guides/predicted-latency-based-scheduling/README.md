@@ -181,6 +181,17 @@ Once traffic is flowing, confirm three things in Prometheus (see the [architectu
 2. **Predictions track reality.** Compare `inference_objective_request_predicted_ttft_seconds` against `inference_objective_request_ttft_seconds` over a rolling window. A healthy deployment converges to within a few percent after warmup.
 3. **SLOs are being honored.** If you're sending SLO-annotated traffic, `inference_objective_request_ttft_slo_violation_total` and `..._tpot_slo_violation_total` should increment only under genuine saturation.
 
+## Cleanup
+
+To remove the deployed components:
+
+```bash
+helm uninstall ${GUIDE_NAME} -n ${NAMESPACE}
+kubectl delete  -n ${NAMESPACE} -k guides/optimized-baseline/modelserver/gpu/vllm/${INFRA_PROVIDER}
+kubectl delete namespace ${NAMESPACE}
+```
+
+
 ## Troubleshooting
 
 | Symptom | Likely cause |
