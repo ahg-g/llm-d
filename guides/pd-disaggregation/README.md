@@ -16,14 +16,14 @@ This guide splits inference into separate **prefill** and **decode** pools. Pref
 - **Prefill** — the `prefix-cache-affinity-filter` keeps prefix groups on cache-warm prefill pods (gated by a calibrated `peakPrefillThroughput`), and the `token-load-scorer` picks the prefill pod with the least queued prompt work.
 - **Decode** — the `active-request-scorer` picks the decode pod with the fewest in-flight requests, since pure decode is bound by concurrency rather than prompt throughput.
 
-The default deployment serves `openai/gpt-oss-120b` on NVIDIA GPUs with **1 prefill pod (TP=1) and 1 decode pod (TP=4)**, 5 GPUs in total: the smallest topology that exercises the full P/D path. Production deployments scale the two pools independently (see [When to use P/D and how to tune it](../../docs/architecture/advanced/disaggregation/README.md#when-to-use-pd-and-how-to-tune-it)).
+The default deployment serves `openai/gpt-oss-120b` on NVIDIA GPUs with **1 prefill pod (TP=1) and 1 decode pod (TP=4)**, 5 GPUs in total: the smallest topology that exercises the full P/D path. Production deployments scale the two pools independently (see [When to use P/D and how to tune it](../../docs/architecture/disaggregation/pd-disaggregation.md#when-to-use-pd-and-how-to-tune-it)).
 
 How the two pools are deployed depends on the accelerator:
 
 - **NVIDIA GPU** (vLLM and SGLang) **and Google TPU7x dynamic sub-slices**: one [`DisaggregatedSet`](https://lws.sigs.k8s.io/docs/concepts/disaggregatedset/) (`pd-disagg-vllm` or `pd-disagg-sglang` on NVIDIA GPU, `pd-disagg-tpu-vllm` on TPU7x dynamic sub-slices) with a `prefill` and a `decode` role, in a single slice. The set rolls both roles out as one version and can replicate the whole topology into independent copies (`slices`); it requires the LeaderWorkerSet controller (see [Prerequisites](#prerequisites)) and is covered in [Operating the DisaggregatedSet](#operating-the-disaggregatedset).
 - **All other accelerators** (AMD, Intel XPU, Google TPU v6e and TPU7x on static node pools, Iluvatar, MetaX, Rebellions NPU): a prefill and a decode `Deployment`.
 
-For why P/D disaggregation helps, how requests flow between the two pools, and tuning guidance, see [Disaggregated Serving](../../docs/architecture/advanced/disaggregation/README.md).
+For why P/D disaggregation helps, how requests flow between the two pools, and tuning guidance, see [Disaggregated Serving](../../docs/architecture/disaggregation/pd-disaggregation.md).
 
 ## Supported Accelerators and Model Servers
 
@@ -85,7 +85,7 @@ Both engines run on NVIDIA GPU with the same router configuration and move KV ca
 - (Optional) Install the [monitoring stack](../../docs/operations/observability/setup.md) if you plan to enable Prometheus monitoring.
 
 - For NVIDIA GPU and TPU7x dynamic sub-slices, the [LeaderWorkerSet controller](https://lws.sigs.k8s.io/docs/installation/) `v0.11.1` or newer with the `DisaggregatedSet` API enabled (`--set enableDisaggregatedSet=true` when installing with Helm, which also installs its validating webhook and RBAC). The [environment step](#configure-the-environment) below installs it for `ACCELERATOR_TYPE=gpu`; skip that step if your cluster already runs it.
-  For TPU7x dynamic sub-slices, install or upgrade it through the [GKE dynamic slicing](../../docs/infrastructure/providers/gke/dynamic-slicing/README.md) cluster preparation instead, whose GKE-documented minimum LWS version is older.
+  For TPU7x dynamic sub-slices, install or upgrade it through the [GKE dynamic slicing](../../docs/infrastructure/providers/gke/README.md#tpu-dynamic-slicing-on-gke) cluster preparation instead, whose GKE-documented minimum LWS version is older.
 
 - Prepare the cluster for your platform (`INFRA_PROVIDER`). `base`, `amd-ci`, `moriio/base`, and the TPU and community accelerators need nothing beyond the accelerator's device plugin (see the [model server tabs](#2-deploy-the-model-server)); the other platforms need:
 
@@ -249,7 +249,7 @@ export ACCELERATOR_VALUES="-f ${REPO_ROOT}/guides/${GUIDE_NAME}/router/npu.rbln.
 <!-- variants:end -->
 <!-- guide:deploy.accelerator_values end -->
 
-**Deploy the router** in [Standalone Mode](../../docs/architecture/core/router/proxy.md), with an Envoy sidecar in front of the router. The release name `${GUIDE_NAME}` is mandatory: the `InferencePool` selector matches a guide label that pairs with this release. To front the router with a Kubernetes Gateway instead, see Gateway Mode in the [Optimized Baseline](../optimized-baseline/README.md#1-deploy-the-llm-d-router).
+**Deploy the router** in [Standalone Mode](../../docs/architecture/router/proxy.md), with an Envoy sidecar in front of the router. The release name `${GUIDE_NAME}` is mandatory: the `InferencePool` selector matches a guide label that pairs with this release. To front the router with a Kubernetes Gateway instead, see Gateway Mode in the [Optimized Baseline](../optimized-baseline/README.md#1-deploy-the-llm-d-router).
 
 <!-- guide:deploy.standalone start -->
 ```bash
@@ -331,13 +331,13 @@ kubectl apply -n ${NAMESPACE} \
 <!-- llm-d-cicd:skip end -->
 <!-- guide:deploy.modelserver.dynamic_slice[0] end -->
 
-`ACCELERATOR_TYPE=tpu/v7-dynamic-slice` deploys `Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8` (`TP=8` per `2x2x1` sub-slice) as one `DisaggregatedSet` (`pd-disagg-tpu-vllm`) with a `prefill` and a `decode` role of one replica each. The controller generates one `LeaderWorkerSet` per role, and Kueue Topology-Aware Scheduling places each LeaderWorkerSet group on a sub-slice that [GKE dynamic slicing](../../docs/infrastructure/providers/gke/dynamic-slicing/README.md) forms on demand from pre-provisioned `4x4x4` sub-blocks, instead of a statically provisioned `2x2x1` node pool.
+`ACCELERATOR_TYPE=tpu/v7-dynamic-slice` deploys `Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8` (`TP=8` per `2x2x1` sub-slice) as one `DisaggregatedSet` (`pd-disagg-tpu-vllm`) with a `prefill` and a `decode` role of one replica each. The controller generates one `LeaderWorkerSet` per role, and Kueue Topology-Aware Scheduling places each LeaderWorkerSet group on a sub-slice that [GKE dynamic slicing](../../docs/infrastructure/providers/gke/README.md#tpu-dynamic-slicing-on-gke) forms on demand from pre-provisioned `4x4x4` sub-blocks, instead of a statically provisioned `2x2x1` node pool.
 
 **Requirements:**
 
 - Pre-provisioned TPU7x `4x4x4` sub-blocks to form the sub-slices from.
 - The [LeaderWorkerSet controller](https://lws.sigs.k8s.io/docs/installation/) `v0.11.1` or newer with the `DisaggregatedSet` API (see [Prerequisites](#prerequisites)); the GKE page's minimum LWS version is older.
-- Cluster preparation, the cluster-scoped Kueue resources, and the per-pod workload requirements from the [GKE dynamic slicing](../../docs/infrastructure/providers/gke/dynamic-slicing/README.md) provider page, which also maps each slice shape to the LWS `size` and maximum TP.
+- Cluster preparation, the cluster-scoped Kueue resources, and the per-pod workload requirements from the [GKE dynamic slicing](../../docs/infrastructure/providers/gke/README.md#tpu-dynamic-slicing-on-gke) provider page, which also maps each slice shape to the LWS `size` and maximum TP.
 
 **Configuration notes:**
 

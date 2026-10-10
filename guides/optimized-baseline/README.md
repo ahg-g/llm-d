@@ -174,7 +174,7 @@ export MONITORING_VALUES="-f ${REPO_ROOT}/guides/recipes/router/features/monitor
 <details open>
 <summary><b>Standalone Mode</b></summary>
 
-This deploys the llm-d Router in [Standalone Mode](../../docs/architecture/core/router/proxy.md) with an Envoy sidecar (default):
+This deploys the llm-d Router in [Standalone Mode](../../docs/architecture/router/proxy.md) with an Envoy sidecar (default):
 
 <!-- guide:deploy.standalone start -->
 ```bash
@@ -251,7 +251,7 @@ kubectl apply -n ${NAMESPACE} \
 <!-- llm-d-cicd:skip end -->
 <!-- guide:deploy.modelserver.dynamic_slice end -->
 
-With `ACCELERATOR_TYPE=tpu/v7-dynamic-slice`, the model servers run on dynamically formed TPU7x sub-slices instead of a static node pool per TPU topology. Capacity is pre-provisioned as `4x4x4` sub-blocks, and [GKE dynamic slicing](../../docs/infrastructure/providers/gke/dynamic-slicing/README.md) forms one sub-slice per model server replica at scheduling time, via Kueue Topology-Aware Scheduling. Each replica is a `LeaderWorkerSet` group; the GKE slice controller activates the requested sub-slice shape for the group and re-forms it on healthy partitions after a hardware failure.
+With `ACCELERATOR_TYPE=tpu/v7-dynamic-slice`, the model servers run on dynamically formed TPU7x sub-slices instead of a static node pool per TPU topology. Capacity is pre-provisioned as `4x4x4` sub-blocks, and [GKE dynamic slicing](../../docs/infrastructure/providers/gke/README.md#tpu-dynamic-slicing-on-gke) forms one sub-slice per model server replica at scheduling time, via Kueue Topology-Aware Scheduling. Each replica is a `LeaderWorkerSet` group; the GKE slice controller activates the requested sub-slice shape for the group and re-forms it on healthy partitions after a hardware failure.
 
 Pick the sub-slice shape with `TPU_SLICE_TOPOLOGY`:
 
@@ -262,7 +262,7 @@ Pick the sub-slice shape with `TPU_SLICE_TOPOLOGY`:
 
 Both shapes serve `Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8`, the model these recipes were load-tested with; set `MODEL` to it. To target `2x2x4` (4 hosts, TP up to 32) or `2x4x4` (8 hosts, TP up to 64), copy the `2x2x2` overlay and change the `cloud.google.com/gke-tpu-slice-topology` annotation, the `cloud.google.com/gke-tpu-partition-<shape>-state` node selector, the LWS `size`, and `--tensor-parallel-size` (2 cores per chip).
 
-Before deploying the model servers, complete the cluster and Kueue TAS setup in [TPU Dynamic Slicing on GKE](../../docs/infrastructure/providers/gke/dynamic-slicing/README.md). The deploy step above also creates the Kueue `LocalQueue` in the guide namespace. Workloads are admitted once their `Slice` resources are `ACTIVE`:
+Before deploying the model servers, complete the cluster and Kueue TAS setup in [TPU Dynamic Slicing on GKE](../../docs/infrastructure/providers/gke/README.md#tpu-dynamic-slicing-on-gke). The deploy step above also creates the Kueue `LocalQueue` in the guide namespace. Workloads are admitted once their `Slice` resources are `ACTIVE`:
 
 ```bash
 kubectl get workloads -n ${NAMESPACE}
@@ -326,7 +326,7 @@ SGLang deployments expose the equivalent signals under `sglang_*`; the [PromQL r
 <details>
 <summary><b>TensorRT-LLM</b></summary>
 
-`trtllm-serve` exposes the equivalent load and KV-cache gauges (`trtllm_num_requests_running`, `trtllm_num_requests_waiting`, `trtllm_kv_cache_utilization`) at `/prometheus/metrics`; see the [model server requirements](../../docs/architecture/core/model-servers.md) for the flags that enable them.
+`trtllm-serve` exposes the equivalent load and KV-cache gauges (`trtllm_num_requests_running`, `trtllm_num_requests_waiting`, `trtllm_kv_cache_utilization`) at `/prometheus/metrics`; see the [model server requirements](../../docs/architecture/model-servers/README.md) for the flags that enable them.
 
 </details>
 <!-- tabs:end -->

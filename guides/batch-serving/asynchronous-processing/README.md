@@ -15,7 +15,7 @@ This guide deploys the Async Processor (Helm chart `llm-d-async`) in front of an
 
 Clients enqueue work and read results from the result topic or list later instead of holding an HTTP connection open, and retries happen without touching real-time traffic. Dispatch gates, set in the Helm values, decide when queued work is released — for example only while the model servers have spare capacity.
 
-For how the processor works — dispatch gates, worker pools, merge policies, retries and deadlines, and queue semantics — see the [Async Processor Architecture](../../../docs/architecture/advanced/batch/async-processor.md).
+For how the processor works — dispatch gates, worker pools, merge policies, retries and deadlines, and queue semantics — see the [Async Processor Architecture](../../../docs/architecture/batch/async-processor.md).
 
 ### When to Use This Path
 
@@ -259,4 +259,4 @@ helm uninstall llm-d-async -n ${NAMESPACE}
 ## Related
 
 - [Async Processor Operations](../../../docs/operations/components/async-processor.md) — concurrency, container sizing, and horizontal scaling.
-- [Async Processor Architecture](../../../docs/architecture/advanced/batch/async-processor.md) — internal mechanics, gates, and queue integrations.
+- [Async Processor Architecture](../../../docs/architecture/batch/async-processor.md) — internal mechanics, gates, and queue integrations.
