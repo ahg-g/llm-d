@@ -57,7 +57,7 @@ For the full CUDA/driver compatibility matrix, see the [CUDA Toolkit Release Not
 
 Google Cloud TPUs (v6e, v7) are supported when running on GKE. See the [GKE infrastructure provider docs](../infrastructure/providers/gke/README.md) for cluster setup.
 
-On TPU7x, model servers can be scheduled onto dynamically formed sub-slices (`2x2x1` through `2x4x4`) instead of statically provisioned node pool topologies. See [TPU Dynamic Slicing on GKE](../infrastructure/providers/gke/dynamic-slicing/README.md).
+On TPU7x, model servers can be scheduled onto dynamically formed sub-slices (`2x2x1` through `2x4x4`) instead of statically provisioned node pool topologies. See [TPU Dynamic Slicing on GKE](../infrastructure/providers/gke/README.md#tpu-dynamic-slicing-on-gke).
 
 ## AMD ROCm
 
